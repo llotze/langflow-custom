@@ -1,27 +1,32 @@
 import { FaDiscord, FaGithub } from "react-icons/fa";
-import { LuBotMessageSquare } from "react-icons/lu";
+import { BotMessageSquare } from "lucide-react";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { DISCORD_URL, GITHUB_URL } from "@/constants/constants";
 import { useDarkStore } from "@/stores/darkStore";
 import { formatNumber } from "@/utils/utils";
+import FlowBuilderChat from "@/components/flowBuilderChatComponent";
+import useFlowBuilderChat from "@/hooks/flows/use-flow-builder-chat";
 
 export const LangflowCounts = () => {
   const stars: number | undefined = useDarkStore((state) => state.stars);
   const discordCount: number = useDarkStore((state) => state.discordCount);
+  const { isOpen, openChat, closeChat } = useFlowBuilderChat();
 
   return (
+    <>
+      <FlowBuilderChat isOpen={isOpen} onClose={closeChat} />
     <div className="flex items-center gap-3">
       
       <ShadTooltip
-        content="Use GraceAI to Guide Your Project"
+        content="Use AI to Build Flows - Describe your workflow and get instant Langflow"
         side="bottom"
         styleClasses="z-10"
       >
         <div
-          onClick={() => window.open(DISCORD_URL, "_blank")}
-          className="hit-area-hover flex items-center gap-2 rounded-md p-1 text-muted-foreground"
+          onClick={openChat}
+          className="hit-area-hover flex items-center gap-2 rounded-md p-1 text-muted-foreground cursor-pointer"
         >
-          <LuBotMessageSquare className="h-4 w-4" />
+          <BotMessageSquare className="h-4 w-4" />
           <span className="text-xs font-semibold">
             {"Use AI to Build AI"}
           </span>
@@ -58,6 +63,7 @@ export const LangflowCounts = () => {
         </div>
       </ShadTooltip>
     </div>
+    </>
   );
 };
 

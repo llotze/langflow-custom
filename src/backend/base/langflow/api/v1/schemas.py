@@ -28,6 +28,53 @@ from langflow.services.database.models.user.model import UserRead
 from langflow.services.tracing.schema import Log
 
 
+# Flow Builder Agent Schemas
+class FlowBuildRequest(BaseModel):
+    """Request model for building a flow from natural language."""
+    query: str = Field(..., description="Natural language description of the desired flow")
+    user_context: dict[str, Any] | None = Field(default=None, description="Additional context about the user")
+    flow_name: str | None = Field(default=None, description="Optional name for the generated flow")
+    complexity: str | None = Field(default="medium", description="Desired complexity level: simple, medium, advanced")
+
+
+class FlowBuildResponse(BaseModel):
+    """Response model for flow building."""
+    success: bool
+    flow_id: str | None = None
+    flow_json: dict[str, Any] | None = None
+    message: str
+    timestamp: datetime
+    processing_time_ms: int
+    components_used: list | None = None
+    recommendations: list | None = None
+
+
+class FlowValidationRequest(BaseModel):
+    """Request model for validating a generated flow."""
+    flow_json: dict[str, Any] = Field(..., description="The Langflow JSON to validate")
+
+
+class FlowValidationResponse(BaseModel):
+    """Response model for flow validation."""
+    valid: bool
+    errors: list
+    warnings: list
+    suggestions: list
+
+
+class ComponentSearchRequest(BaseModel):
+    """Request model for searching available components."""
+    query: str = Field(..., description="Search query for components")
+    limit: int | None = Field(default=10, description="Maximum number of results")
+
+
+class ComponentSearchResponse(BaseModel):
+    """Response model for component search."""
+    components: list
+    total_found: int
+    query_time_ms: int
+
+
 class BuildStatus(Enum):
     """Status of the build."""
 
@@ -454,3 +501,50 @@ class MCPProjectResponse(BaseModel):
 
 class MCPInstallRequest(BaseModel):
     client: str
+
+
+# Flow Builder Agent Schemas
+class FlowBuildRequest(BaseModel):
+    """Request model for building a flow from natural language."""
+    query: str = Field(..., description="Natural language description of the desired flow")
+    user_context: dict[str, Any] | None = Field(default=None, description="Additional context about the user")
+    flow_name: str | None = Field(default=None, description="Optional name for the generated flow")
+    complexity: str | None = Field(default="medium", description="Desired complexity level: simple, medium, advanced")
+
+
+class FlowBuildResponse(BaseModel):
+    """Response model for flow building."""
+    success: bool
+    flow_id: str | None = None
+    flow_json: dict[str, Any] | None = None
+    message: str
+    timestamp: datetime
+    processing_time_ms: int
+    components_used: list | None = None
+    recommendations: list | None = None
+
+
+class FlowValidationRequest(BaseModel):
+    """Request model for validating a generated flow."""
+    flow_json: dict[str, Any] = Field(..., description="The Langflow JSON to validate")
+
+
+class FlowValidationResponse(BaseModel):
+    """Response model for flow validation."""
+    valid: bool
+    errors: list
+    warnings: list
+    suggestions: list
+
+
+class ComponentSearchRequest(BaseModel):
+    """Request model for searching available components."""
+    query: str = Field(..., description="Search query for components")
+    limit: int | None = Field(default=10, description="Maximum number of results")
+
+
+class ComponentSearchResponse(BaseModel):
+    """Response model for component search."""
+    components: list
+    total_found: int
+    query_time_ms: int
