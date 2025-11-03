@@ -166,6 +166,10 @@ export type changeUser = {
     discord_clicked?: boolean;
     dialog_dismissed?: boolean;
     mcp_dialog_dismissed?: boolean;
+    onboarding_completed?: boolean;
+    onboarding_preferences?: {
+      [key: string]: string | undefined;
+    };
   };
 };
 
@@ -187,6 +191,10 @@ export type Users = {
     discord_clicked?: boolean;
     dialog_dismissed?: boolean;
     mcp_dialog_dismissed?: boolean;
+    onboarding_completed?: boolean;
+    onboarding_preferences?: {
+      [key: string]: string | undefined;
+    };
   };
 };
 
