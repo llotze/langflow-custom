@@ -1,0 +1,26 @@
+# .gitignore additions for Flow Builder Agent
+
+# Environment variables (contains API keys)
+flow_builder_agent/.env
+
+# Python cache
+flow_builder_agent/__pycache__/
+flow_builder_agent/**/__pycache__/
+*.pyc
+
+# Model cache (sentence-transformers downloads models)
+flow_builder_agent/.cache/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test outputs
+test-results/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

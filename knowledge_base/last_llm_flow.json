@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "node_1",
+      "type": "genericNode",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "data": {
+        "type": "ChatInput",
+        "id": "node_1",
+        "node": {}
+      }
+    },
+    {
+      "id": "node_2",
+      "type": "genericNode",
+      "position": {
+        "x": 400,
+        "y": 100
+      },
+      "data": {
+        "type": "OpenAIModel",
+        "id": "node_2",
+        "node": {
+          "api_key": {
+            "value": "YOUR_OPENAI_API_KEY",
+            "password": true
+          },
+          "model_name": {
+            "value": "gpt-3.5-turbo",
+            "type": "str"
+          },
+          "input_value": {
+            "value": "{{chat_input_node_1.data}}",
+            "type": "str"
+          },
+          "temperature": {
+            "value": 0.7,
+            "type": "float"
+          },
+          "system_message": {
+            "value": "You are a helpful assistant.",
+            "type": "str"
+          }
+        }
+      }
+    },
+    {
+      "id": "node_3",
+      "type": "genericNode",
+      "position": {
+        "x": 800,
+        "y": 100
+      },
+      "data": {
+        "type": "ChatOutput",
+        "id": "node_3",
+        "node": {
+          "input_value": {
+            "value": "{{openai_model_node_2.data}}",
+            "type": "str"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_1",
+      "sourceHandle": "data",
+      "target": "node_2",
+      "targetHandle": "input_value",
+      "id": "edge-node_1-data-node_2-input_value"
+    },
+    {
+      "source": "node_2",
+      "sourceHandle": "data",
+      "target": "node_3",
+      "targetHandle": "input_value",
+      "id": "edge-node_2-data-node_3-input_value"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

@@ -24,15 +24,15 @@ async def test_specific_components():
     test_cases = [
         {
             "prompt": "Create a chatbot that stores conversation history in Amazon S3",
-            "expected_components": ["ChatInput", "Amazon", "S3", "ChatOutput"]
+            "expected_components": ["ChatInput", "Amazon", "s3bucketuploader", "ChatOutput"]
         },
         {
             "prompt": "Build a document processing flow with OpenAI",
-            "expected_components": ["File", "OpenAI", "ChatOutput"]
+            "expected_components": ["File", "OpenAIModel", "ChatOutput"]
         },
         {
             "prompt": "Create a flow with Google Gemini model",
-            "expected_components": ["ChatInput", "Gemini", "Google", "ChatOutput"]
+            "expected_components": ["ChatInput", "GoogleGenerativeAIModel", "ChatOutput"]
         }
     ]
     

@@ -10,6 +10,10 @@ import logging
 import os
 
 from .schemas import FlowBuildRequest, FlowBuildResponse, FlowValidationRequest, FlowValidationResponse, ComponentSearchRequest, ComponentSearchResponse
+# NEW: DB/session + models utilities for saving flows
+from langflow.api.utils import DbSession, CurrentActiveUser
+from langflow.services.database.models.flow.model import FlowCreate as DBFlowCreate
+from .flows import _new_flow, _save_flow_to_fs
 
 # Import our Flow Builder Agent
 try:
@@ -19,11 +23,11 @@ except ImportError:
     FLOW_BUILDER_AVAILABLE = False
     SimpleFlowBuilderAgent = None
 
-# Import Langflow component registry
+# Import Langflow component registry using backend shim
 try:
-    from langflow.interface.types import get_type_dict
+    from langflow.interface.components import get_type_dict  # local shim re-exports from lfx
     LANGFLOW_TYPES_AVAILABLE = True
-except ImportError:
+except Exception:
     LANGFLOW_TYPES_AVAILABLE = False
     get_type_dict = None
 
@@ -36,35 +40,78 @@ _agent = None
 
 
 def get_flow_builder_agent():
-    """Dependency to get the Flow Builder Agent instance."""
+    """Dependency to get the Flow Builder Agent instance.
+    Chooses provider based on available API keys. Falls back to OpenAI if
+    Gemini initialization fails (e.g., missing google-generativeai).
+    """
     global _agent
     if not FLOW_BUILDER_AVAILABLE:
         raise HTTPException(
             status_code=503,
-            detail="Flow Builder Agent not available. Please install the flow_builder_agent package."
+            detail="Flow Builder Agent not available. Please install the flow_builder_agent package.",
         )
-    
-    if _agent is None:
-        # Try Gemini first, fall back to OpenAI
-        gemini_key = os.getenv("GEMINI_API_KEY")
-        openai_key = os.getenv("OPENAI_API_KEY")
-        
-        if gemini_key:
+
+    if _agent is not None:
+        return _agent
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+
+    # Prefer Gemini when key is present
+    if gemini_key:
+        logging.info("FlowBuilderAgent: Initializing Gemini provider...")
+        try:
             _agent = SimpleFlowBuilderAgent(
-                api_key=gemini_key,
-                provider="gemini",
-                model_name="gemini-2.5-flash"
+                api_key=gemini_key, provider="gemini", model_name=os.getenv("FLOW_BUILDER_MODEL", "gemini-2.5-flash")
             )
-        elif openai_key:
-            _agent = SimpleFlowBuilderAgent(
-                openai_api_key=openai_key
-            )
-        else:
+            logging.info("FlowBuilderAgent: Gemini initialized successfully")
+            return _agent
+        except Exception as e:
+            logging.error(f"FlowBuilderAgent: Gemini init failed: {e}")
+            if openai_key:
+                logging.info("FlowBuilderAgent: Falling back to OpenAI provider...")
+                try:
+                    _agent = SimpleFlowBuilderAgent(openai_api_key=openai_key)
+                    logging.info("FlowBuilderAgent: OpenAI initialized successfully (fallback)")
+                    return _agent
+                except Exception as oe:
+                    logging.error(f"FlowBuilderAgent: OpenAI fallback also failed: {oe}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=(
+                            "Failed to initialize Gemini (" + str(e) + ") and OpenAI fallback (" + str(oe) + "). "
+                            "Install google-generativeai or set OPENAI_API_KEY to use OpenAI."
+                        ),
+                    )
+            # No OpenAI key to fall back to
             raise HTTPException(
                 status_code=500,
-                detail="No AI provider API key configured. Please set GEMINI_API_KEY or OPENAI_API_KEY environment variable."
+                detail=(
+                    "Failed to initialize Gemini provider: "
+                    + str(e)
+                    + ". Install google-generativeai or unset GEMINI_API_KEY to avoid selecting Gemini."
+                ),
             )
-    return _agent
+
+    # If no Gemini, try OpenAI
+    if openai_key:
+        logging.info("FlowBuilderAgent: Initializing OpenAI provider...")
+        try:
+            _agent = SimpleFlowBuilderAgent(openai_api_key=openai_key)
+            logging.info("FlowBuilderAgent: OpenAI initialized successfully")
+            return _agent
+        except Exception as e:
+            logging.error(f"FlowBuilderAgent: OpenAI init failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to initialize OpenAI provider: {e}")
+
+    # Neither key provided
+    raise HTTPException(
+        status_code=500,
+        detail=(
+            "No AI provider API key configured. Set GEMINI_API_KEY (requires google-generativeai) "
+            "or OPENAI_API_KEY in the backend environment."
+        ),
+    )
 
 
 def enrich_nodes_with_templates(flow_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -122,16 +169,19 @@ def enrich_nodes_with_templates(flow_data: Dict[str, Any]) -> Dict[str, Any]:
 
 @router.post("/build", response_model=FlowBuildResponse)
 async def build_flow(
+    *,
+    session: DbSession,
     request: FlowBuildRequest,
+    current_user: CurrentActiveUser,
     background_tasks: BackgroundTasks,
-    agent = Depends(get_flow_builder_agent)
+    agent = Depends(get_flow_builder_agent),
 ):
     """
     Build a Langflow flow from natural language description.
-    
-    This is the main endpoint that converts user requirements into deployable flows.
+    If request.persist is True, the generated flow is saved so it appears in the Langflow UI.
+    Otherwise we just return the flow JSON for the current canvas.
     """
-    logging.info(f"🌐 API ENDPOINT: Received request - query: '{request.query}', flow_name: '{request.flow_name}'")
+    logging.info(f"🌐 API ENDPOINT: Received request - query: '{request.query}', flow_name: '{request.flow_name}', persist={getattr(request, 'persist', False)}")
     start_time = datetime.utcnow()
     try:
         logging.info(f"🤖 API ENDPOINT: Calling agent.build_flow_async...")
@@ -140,14 +190,36 @@ async def build_flow(
             user_request=request.query, 
             flow_name=request.flow_name
         )
-        
         logging.info(f"✅ API ENDPOINT: Agent returned flow data")
-        
+
         # Enrich nodes with proper templates from component registry
         logging.info(f"📦 API ENDPOINT: Enriching nodes with templates...")
         flow_data = enrich_nodes_with_templates(flow_data)
         logging.info(f"✅ API ENDPOINT: Node enrichment complete")
-        
+
+        flow_id: Optional[str] = None
+        # Persist only if explicitly requested
+        if getattr(request, "persist", False):
+            try:
+                db_flow_in = DBFlowCreate(
+                    name=flow_data.get("name") or (request.flow_name or "Generated Flow"),
+                    description=flow_data.get("description") or f"Generated from query: {request.query[:80]}",
+                    data=flow_data.get("data") or {},
+                    is_component=False,
+                )
+                db_flow = await _new_flow(session=session, flow=db_flow_in, user_id=current_user.id)
+                await session.commit()
+                await session.refresh(db_flow)
+                # Save to filesystem if configured
+                await _save_flow_to_fs(db_flow)
+                flow_id = str(db_flow.id)
+                logging.info(f"💾 API ENDPOINT: Flow persisted with id={flow_id}")
+            except Exception as save_err:
+                logging.error(f"⚠️ API ENDPOINT: Failed to persist generated flow: {save_err}")
+                flow_id = None
+        else:
+            logging.info("📝 API ENDPOINT: Persistence disabled (persist=false), returning ephemeral flow JSON")
+
         # Calculate processing time
         end_time = datetime.utcnow()
         processing_time_ms = int((end_time - start_time).total_seconds() * 1000)
@@ -164,7 +236,7 @@ async def build_flow(
         
         return FlowBuildResponse(
             success=True,
-            flow_id=None,  # Can be set after saving to database
+            flow_id=flow_id,
             flow_json=flow_data,
             message="Flow generated successfully",
             timestamp=end_time,

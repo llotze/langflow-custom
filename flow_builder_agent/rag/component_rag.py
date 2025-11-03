@@ -1,6 +1,6 @@
 """
 RAG (Retrieval-Augmented Generation) system for the Flow Builder Agent.
-This system queries existing Langflow components instead of using hardcoded definitions.
+This system queries Langflow components via API instead of using hardcoded definitions.
 """
 
 import json
@@ -11,24 +11,14 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import logging
 from pathlib import Path
-
-# Use existing Langflow component system
-try:
-    from langflow.interface.types import get_type_dict
-    LANGFLOW_AVAILABLE = True
-except ImportError:
-    try:
-        # Fallback to lfx if langflow not available
-        from lfx.interface.components import import_langflow_components, aget_all_types_dict
-        LANGFLOW_AVAILABLE = True
-        get_type_dict = None
-    except ImportError:
-        LANGFLOW_AVAILABLE = False
-        get_type_dict = None
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import os
 
 
 class ComponentRAG:
-    """RAG system that queries existing Langflow components instead of hardcoded definitions."""
+    """RAG system that queries Langflow components via API."""
     
     # Common component name variations/aliases
     COMPONENT_ALIASES = {
@@ -36,73 +26,167 @@ class ComponentRAG:
         "Anthropic": "AnthropicModel",
         "Google": "GoogleGenerativeAIModel",
         "Gemini": "GoogleGenerativeAIModel",
-        "Amazon": "AmazonS3Component",
-        "S3": "AmazonS3Component",
+        # Amazon chat models should resolve to Bedrock
+        "Amazon": "AmazonBedrockConverseModel",
+        "Amazon Bedrock": "AmazonBedrockConverseModel",
+        "Bedrock": "AmazonBedrockConverseModel",
+        # S3 uploader component aliases
+        "S3": "s3bucketuploader",
+        "Amazon S3": "s3bucketuploader",
+        "S3Uploader": "s3bucketuploader",
+        "S3 Uploader": "s3bucketuploader",
+        "S3BucketUploader": "s3bucketuploader",
+        # Vector stores
         "Pinecone": "PineconeVectorStore",
         "Chroma": "ChromaVectorStore",
         "Weaviate": "WeaviateVectorStore",
     }
     
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
-        """Initialize the RAG system with a sentence transformer model."""
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", langflow_api_url: Optional[str] = None):
+        """Initialize the RAG system with a sentence transformer model.
+        
+        Args:
+            model_name: Name of the sentence transformer model to use for embeddings
+            langflow_api_url: URL of the Langflow API (defaults to config or http://127.0.0.1:7860)
+        """
         self.model = SentenceTransformer(model_name)
+        
+        # Get API URL from parameter, config, or use default
+        if langflow_api_url is None:
+            try:
+                from ..config import Config
+                langflow_api_url = Config.LANGFLOW_API_URL
+            except ImportError:
+                langflow_api_url = "http://127.0.0.1:7860"
+        
+        self.langflow_api_url = langflow_api_url.rstrip('/')  # Remove trailing slash
         self.components_cache = None
         self.component_embeddings = None
         self.component_names = None
         self.logger = logging.getLogger(__name__)
-          # Initialize from existing Langflow system
+        
+        # Create a session with retry logic
+        self.session = self._create_session()
+        
+        # Initialize from Langflow API
         self._load_langflow_components()
         self._build_embeddings()
     
-    def _load_langflow_components(self):
-        """Load components from existing Langflow system."""
-        try:
-            if LANGFLOW_AVAILABLE and get_type_dict is not None:
-                # Use get_type_dict to get all available components
-                self.logger.info("Loading components using get_type_dict()...")
-                self.components_cache = get_type_dict()
-                self.logger.info(f"✅ Loaded {len(self.components_cache)} component categories from Langflow")
-                
-                # Log what we got
-                total_components = sum(len(comps) if isinstance(comps, dict) else 0 
-                                     for comps in self.components_cache.values())
-                self.logger.info(f"   Total components across all categories: {total_components}")
-                
-                # Log first few categories
-                for cat in list(self.components_cache.keys())[:5]:
-                    comps = self.components_cache[cat]
-                    if isinstance(comps, dict):
-                        self.logger.info(f"   Category '{cat}': {len(comps)} components")
-            else:
-                self.logger.warning("Langflow interface not available, using fallback components")
-                self._load_fallback_components()
-        except Exception as e:
-            self.logger.error(f"Failed to load Langflow components: {e}")
-            import traceback
-            traceback.print_exc()
-            self._load_fallback_components()
-    
-    async def _async_load_components(self):
-        """Async helper to load components from Langflow."""
-        # Try to get components from import_langflow_components first
-        langflow_result = await import_langflow_components()
-        return langflow_result.get("components", {})
-    
-    async def async_reload_components(self):
-        """Async method to reload components from Langflow system."""
-        try:
-            if LANGFLOW_AVAILABLE:
-                self.components_cache = await self._async_load_components()
-                self._build_embeddings()
-                self.logger.info(f"Reloaded {len(self.components_cache)} component categories from Langflow")
-                return True
-            else:
-                self.logger.warning("Langflow interface not available")
-                return False
-        except Exception as e:
-            self.logger.error(f"Failed to reload Langflow components: {e}")
-            return False
+    def _create_session(self) -> requests.Session:
+        """Create a requests session with retry logic."""
+        session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        return session
 
+    def _load_langflow_components(self):
+        """Load components from local cache first, then Langflow API if needed."""
+        # Prefer local components.json when present to avoid API auth/availability issues
+        components_path = Path(__file__).resolve().parents[1] / "components.json"
+
+        def _is_valid_components(data: Any) -> bool:
+            return isinstance(data, dict) and len(data) > 0
+
+        def _auth_headers() -> dict:
+            key = os.getenv("LANGFLOW_API_KEY") or os.getenv("API_KEY")
+            return {"x-api-key": key} if key else {}
+
+        # 1) Try local file first
+        try:
+            if components_path.exists() and components_path.stat().st_size > 0:
+                with components_path.open("r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if _is_valid_components(data):
+                    self.components_cache = data
+                    total_components = sum(
+                        len(comps) if isinstance(comps, dict) else 0
+                        for comps in self.components_cache.values()
+                    )
+                    self.logger.info(
+                        f"✅ Loaded {len(self.components_cache)} categories with {total_components} components from local components.json"
+                    )
+                    return
+                else:
+                    self.logger.warning("Local components.json found but invalid; will try API.")
+        except Exception as e:
+            self.logger.warning(f"Could not load local components.json: {e}; will try API.")
+
+        # 2) Try API endpoints in order of preference
+        endpoints = [
+            f"{self.langflow_api_url}/api/v1/all",
+            f"{self.langflow_api_url}/api/v1/components",
+            f"{self.langflow_api_url}/api/v1/store/components",
+        ]
+
+        headers = _auth_headers()
+        if headers:
+            self.logger.info("Using x-api-key for internal API calls to fetch components")
+
+        for api_endpoint in endpoints:
+            try:
+                self.logger.info(f"🔄 Loading components from Langflow API: {api_endpoint}")
+                response = self.session.get(api_endpoint, headers=headers, timeout=20)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    if not _is_valid_components(data):
+                        self.logger.error("❌ API returned invalid data structure; trying next endpoint")
+                        continue
+
+                    self.components_cache = data
+                    total_components = sum(
+                        len(comps) if isinstance(comps, dict) else 0
+                        for comps in self.components_cache.values()
+                    )
+                    self.logger.info(
+                        f"✅ Loaded {len(self.components_cache)} categories with {total_components} total components from API"
+                    )
+
+                    # Persist to local cache for next runs
+                    try:
+                        components_path.parent.mkdir(parents=True, exist_ok=True)
+                        with components_path.open("w", encoding="utf-8") as f:
+                            json.dump(self.components_cache, f, indent=2)
+                        self.logger.info(f"📝 Cached components to {components_path}")
+                    except Exception as e:
+                        self.logger.warning(f"Could not cache components to file: {e}")
+
+                    return
+
+                elif response.status_code in (401, 403):
+                    self.logger.error(
+                        f"❌ Unauthorized to GET {api_endpoint} (status {response.status_code}). "
+                        f"Set LANGFLOW_API_KEY in the backend environment or use skip auth."
+                    )
+                    # Try next endpoint; some deployments only protect some routes
+                    continue
+                else:
+                    self.logger.warning(
+                        f"⚠️ API returned status {response.status_code} from {api_endpoint}: {response.text[:200]}"
+                    )
+                    # Try next endpoint
+            except requests.exceptions.ConnectionError:
+                self.logger.warning(
+                    f"⚠️ Cannot connect to Langflow API at {self.langflow_api_url}; will try next/fallback."
+                )
+                continue
+            except requests.exceptions.Timeout:
+                self.logger.warning(f"⚠️ Request to {api_endpoint} timed out; trying next endpoint")
+                continue
+            except Exception as e:
+                self.logger.error(f"❌ Unexpected error loading from API {api_endpoint}: {e}")
+                continue
+
+        # 3) Final fallback to minimal built-ins
+        self.logger.warning("Using minimal fallback component set; RAG quality will be limited.")
+        self._load_fallback_components()
+    
     def _load_fallback_components(self):
         """Fallback component definitions for development/testing."""
         self.components_cache = {
@@ -195,8 +279,14 @@ class ComponentRAG:
                     
                     # Create final search text
                     text = " ".join(text_parts)
+
+                    # Ensure we propagate category so callers can show it
+                    comp_info_out = comp_info.copy() if isinstance(comp_info, dict) else comp_info
+                    if isinstance(comp_info_out, dict):
+                        comp_info_out.setdefault("category", category)
+
                     component_texts.append(text)
-                    component_names.append((category, comp_name, comp_info))
+                    component_names.append((category, comp_name, comp_info_out))
         
         if component_texts:
             self.logger.info(f"Creating embeddings for {len(component_texts)} components...")
@@ -322,6 +412,7 @@ class ComponentRAG:
         if isinstance(components, dict):
             return [(name, comp_info) for name, comp_info in components.items()]
         return []
+    
     def analyze_user_request(self, user_request: str) -> Dict[str, Any]:
         """
         Analyze user request to extract requirements and suggest components.
@@ -375,7 +466,7 @@ class ComponentRAG:
         analysis["suggested_components"] = [
             {
                 "name": name,
-                "category": getattr(comp, "category", "unknown") if hasattr(comp, "category") else "unknown",
+                "category": (comp.get("category", "unknown") if isinstance(comp, dict) else getattr(comp, "category", "unknown")),
                 "relevance_score": score,
                 "reason": f"Relevant for: {user_request[:50]}..."
             }

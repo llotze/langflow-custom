@@ -1,0 +1,2734 @@
+[
+  {
+    "category": "amazon",
+    "name": "AmazonBedrockConverseModel",
+    "display_name": "Amazon Bedrock Converse",
+    "description": "Generate text using Amazon Bedrock LLMs with the modern Converse API for improved conversation handling. We recommend the Converse API for users who do not need to use custom models. It can be accessed using ChatBedrockConverse.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "additional_model_fields",
+        "display_name": "Additional Model Fields",
+        "type": "dict",
+        "info": "Additional model-specific parameters for fine-tuning behavior.",
+        "required": false
+      },
+      {
+        "name": "aws_access_key_id",
+        "display_name": "AWS Access Key ID",
+        "type": "str",
+        "info": "The access key for your AWS account. Usually set in Python code as the environment variable 'AWS_ACCESS_KEY_ID'.",
+        "required": true
+      },
+      {
+        "name": "aws_secret_access_key",
+        "display_name": "AWS Secret Access Key",
+        "type": "str",
+        "info": "The secret key for your AWS account. Usually set in Python code as the environment variable 'AWS_SECRET_ACCESS_KEY'.",
+        "required": true
+      },
+      {
+        "name": "aws_session_token",
+        "display_name": "AWS Session Token",
+        "type": "str",
+        "info": "The session key for your AWS account. Only needed for temporary credentials. Usually set in Python code as the environment variable 'AWS_SESSION_TOKEN'.",
+        "required": false
+      },
+      {
+        "name": "credentials_profile_name",
+        "display_name": "Credentials Profile Name",
+        "type": "str",
+        "info": "The name of the profile to use from your ~/.aws/credentials file. If not provided, the default profile will be used.",
+        "required": false
+      },
+      {
+        "name": "disable_streaming",
+        "display_name": "Disable Streaming",
+        "type": "bool",
+        "info": "If True, disables streaming responses. Useful for batch processing.",
+        "required": false
+      },
+      {
+        "name": "endpoint_url",
+        "display_name": "Endpoint URL",
+        "type": "str",
+        "info": "The URL of the Bedrock endpoint to use.",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Tokens",
+        "type": "int",
+        "info": "Maximum number of tokens to generate.",
+        "required": false
+      },
+      {
+        "name": "model_id",
+        "display_name": "Model ID",
+        "type": "str",
+        "info": "List of available model IDs to choose from.",
+        "required": false
+      },
+      {
+        "name": "region_name",
+        "display_name": "Region Name",
+        "type": "str",
+        "info": "The AWS region where your Bedrock resources are located.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "float",
+        "info": "Controls randomness in output. Higher values make output more random.",
+        "required": false
+      },
+      {
+        "name": "top_k",
+        "display_name": "Top K",
+        "type": "int",
+        "info": "Limits the number of highest probability vocabulary tokens to consider. Note: Not all models support top_k. Use 'Additional Model Fields' for manual configuration if needed.",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "Nucleus sampling parameter. Controls diversity of output.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "amazon",
+    "name": "AmazonBedrockEmbeddings",
+    "display_name": "Amazon Bedrock Embeddings",
+    "description": "Generate embeddings using Amazon Bedrock models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "aws_access_key_id",
+        "display_name": "AWS Access Key ID",
+        "type": "str",
+        "info": "The access key for your AWS account.Usually set in Python code as the environment variable 'AWS_ACCESS_KEY_ID'.",
+        "required": true
+      },
+      {
+        "name": "aws_secret_access_key",
+        "display_name": "AWS Secret Access Key",
+        "type": "str",
+        "info": "The secret key for your AWS account. Usually set in Python code as the environment variable 'AWS_SECRET_ACCESS_KEY'.",
+        "required": true
+      },
+      {
+        "name": "aws_session_token",
+        "display_name": "AWS Session Token",
+        "type": "str",
+        "info": "The session key for your AWS account. Only needed for temporary credentials. Usually set in Python code as the environment variable 'AWS_SESSION_TOKEN'.",
+        "required": false
+      },
+      {
+        "name": "credentials_profile_name",
+        "display_name": "Credentials Profile Name",
+        "type": "str",
+        "info": "The name of the profile to use from your ~/.aws/credentials file. If not provided, the default profile will be used.",
+        "required": false
+      },
+      {
+        "name": "endpoint_url",
+        "display_name": "Endpoint URL",
+        "type": "str",
+        "info": "The URL of the AWS Bedrock endpoint to use.",
+        "required": false
+      },
+      {
+        "name": "model_id",
+        "display_name": "Model Id",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "region_name",
+        "display_name": "Region Name",
+        "type": "str",
+        "info": "The AWS region where your Bedrock resources are located.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "amazon",
+    "name": "AmazonBedrockModel",
+    "display_name": "Amazon Bedrock",
+    "description": "Generate text using Amazon Bedrock LLMs with the legacy ChatBedrock API. For better compatibility, newer features, and improved conversation handling, we recommend using Amazon Bedrock Converse instead.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "aws_access_key_id",
+        "display_name": "AWS Access Key ID",
+        "type": "str",
+        "info": "The access key for your AWS account.Usually set in Python code as the environment variable 'AWS_ACCESS_KEY_ID'.",
+        "required": true
+      },
+      {
+        "name": "aws_secret_access_key",
+        "display_name": "AWS Secret Access Key",
+        "type": "str",
+        "info": "The secret key for your AWS account. Usually set in Python code as the environment variable 'AWS_SECRET_ACCESS_KEY'.",
+        "required": true
+      },
+      {
+        "name": "aws_session_token",
+        "display_name": "AWS Session Token",
+        "type": "str",
+        "info": "The session key for your AWS account. Only needed for temporary credentials. Usually set in Python code as the environment variable 'AWS_SESSION_TOKEN'.",
+        "required": false
+      },
+      {
+        "name": "credentials_profile_name",
+        "display_name": "Credentials Profile Name",
+        "type": "str",
+        "info": "The name of the profile to use from your ~/.aws/credentials file. If not provided, the default profile will be used.",
+        "required": false
+      },
+      {
+        "name": "endpoint_url",
+        "display_name": "Endpoint URL",
+        "type": "str",
+        "info": "The URL of the Bedrock endpoint to use.",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model_id",
+        "display_name": "Model ID",
+        "type": "str",
+        "info": "List of available model IDs to choose from.",
+        "required": false
+      },
+      {
+        "name": "model_kwargs",
+        "display_name": "Model Kwargs",
+        "type": "dict",
+        "info": "Additional keyword arguments to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "region_name",
+        "display_name": "Region Name",
+        "type": "str",
+        "info": "The AWS region where your Bedrock resources are located.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "amazon",
+    "name": "s3bucketuploader",
+    "display_name": "S3 Bucket Uploader",
+    "description": "Uploads files to S3 bucket.",
+    "base_classes": [
+      "NoneType"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "data_inputs",
+        "display_name": "Data Inputs",
+        "type": "other",
+        "info": "The data to split.",
+        "required": true
+      },
+      {
+        "name": "aws_access_key_id",
+        "display_name": "AWS Access Key ID",
+        "type": "str",
+        "info": "AWS Access key ID.",
+        "required": true
+      },
+      {
+        "name": "aws_secret_access_key",
+        "display_name": "AWS Secret Key",
+        "type": "str",
+        "info": "AWS Secret Key.",
+        "required": true
+      },
+      {
+        "name": "bucket_name",
+        "display_name": "Bucket Name",
+        "type": "str",
+        "info": "Enter the name of the bucket.",
+        "required": false
+      },
+      {
+        "name": "s3_prefix",
+        "display_name": "S3 Prefix",
+        "type": "str",
+        "info": "Prefix for all files.",
+        "required": false
+      },
+      {
+        "name": "strategy",
+        "display_name": "Strategy for file upload",
+        "type": "str",
+        "info": "Choose the strategy to upload the file. By Data means that the source file is parsed and stored as LangFlow data. By File Name means that the source file is uploaded as is.",
+        "required": false
+      },
+      {
+        "name": "strip_path",
+        "display_name": "Strip Path",
+        "type": "bool",
+        "info": "Removes path from file path.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "anthropic",
+    "name": "AnthropicModel",
+    "display_name": "Anthropic",
+    "description": "Generate text using Anthropic's Messages API and models.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Anthropic API Key",
+        "type": "str",
+        "info": "Your Anthropic API key.",
+        "required": true
+      },
+      {
+        "name": "base_url",
+        "display_name": "Anthropic API URL",
+        "type": "str",
+        "info": "Endpoint of the Anthropic API. Defaults to 'https://api.anthropic.com' if not specified.",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Tokens",
+        "type": "int",
+        "info": "The maximum number of tokens to generate. Set to 0 for unlimited tokens.",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "Run inference with this temperature. Must by in the closed interval [0.0, 1.0].",
+        "required": false
+      },
+      {
+        "name": "tool_model_enabled",
+        "display_name": "Enable Tool Models",
+        "type": "bool",
+        "info": "Select if you want to use models that can work with tools. If yes, only those models will be shown.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "azure",
+    "name": "AzureOpenAIModel",
+    "display_name": "Azure OpenAI",
+    "description": "Generate text using Azure OpenAI LLMs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "https://python.langchain.com/docs/integrations/llms/azure_openai",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Azure Chat OpenAI API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "api_version",
+        "display_name": "API Version",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "azure_deployment",
+        "display_name": "Deployment Name",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "azure_endpoint",
+        "display_name": "Azure Endpoint",
+        "type": "str",
+        "info": "Your Azure endpoint, including the resource. Example: `https://example-resource.azure.openai.com/`",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Tokens",
+        "type": "int",
+        "info": "The maximum number of tokens to generate. Set to 0 for unlimited tokens.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "Controls randomness. Lower values are more deterministic, higher values are more creative.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "azure",
+    "name": "AzureOpenAIEmbeddings",
+    "display_name": "Azure OpenAI Embeddings",
+    "description": "Generate embeddings using Azure OpenAI models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "https://python.langchain.com/docs/integrations/text_embedding/azureopenai",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Azure OpenAI API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "api_version",
+        "display_name": "API Version",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "azure_deployment",
+        "display_name": "Deployment Name",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "azure_endpoint",
+        "display_name": "Azure Endpoint",
+        "type": "str",
+        "info": "Your Azure endpoint, including the resource. Example: `https://example-resource.azure.openai.com/`",
+        "required": true
+      },
+      {
+        "name": "dimensions",
+        "display_name": "Dimensions",
+        "type": "int",
+        "info": "The number of dimensions the resulting output embeddings should have. Only supported by certain models.",
+        "required": false
+      },
+      {
+        "name": "model",
+        "display_name": "Model",
+        "type": "str",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "cohere",
+    "name": "CohereEmbeddings",
+    "display_name": "Cohere Embeddings",
+    "description": "Generate embeddings using Cohere models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Cohere API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "request_timeout",
+        "display_name": "Request Timeout",
+        "type": "float",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "truncate",
+        "display_name": "Truncate",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "user_agent",
+        "display_name": "User Agent",
+        "type": "str",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "cohere",
+    "name": "CohereModel",
+    "display_name": "Cohere Language Models",
+    "description": "Generate text using Cohere LLMs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "https://python.langchain.com/docs/integrations/llms/cohere/",
+    "inputs": [
+      {
+        "name": "cohere_api_key",
+        "display_name": "Cohere API Key",
+        "type": "str",
+        "info": "The Cohere API Key to use for the Cohere model.",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "Controls randomness. Lower values are more deterministic, higher values are more creative.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "cohere",
+    "name": "CohereRerank",
+    "display_name": "Cohere Rerank",
+    "description": "Rerank documents using the Cohere API.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "search_results",
+        "display_name": "Search Results",
+        "type": "other",
+        "info": "Search Results from a Vector Store.",
+        "required": false
+      },
+      {
+        "name": "api_key",
+        "display_name": "Cohere API Key",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model",
+        "display_name": "Model",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "search_query",
+        "display_name": "Search Query",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "top_n",
+        "display_name": "Top N",
+        "type": "int",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GmailLoaderComponent",
+    "display_name": "Gmail Loader",
+    "description": "Loads emails from Gmail using provided credentials.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "json_string",
+        "display_name": "JSON String of the Service Account Token",
+        "type": "str",
+        "info": "JSON string containing OAuth 2.0 access token information for service account access",
+        "required": true
+      },
+      {
+        "name": "label_ids",
+        "display_name": "Label IDs",
+        "type": "str",
+        "info": "Comma-separated list of label IDs to filter emails.",
+        "required": true
+      },
+      {
+        "name": "max_results",
+        "display_name": "Max Results",
+        "type": "str",
+        "info": "Maximum number of emails to load.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "BigQueryExecutor",
+    "display_name": "BigQuery",
+    "description": "Execute SQL queries on Google BigQuery.",
+    "base_classes": [
+      "DataFrame"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "service_account_json_file",
+        "display_name": "Upload Service Account JSON",
+        "type": "file",
+        "info": "Upload the JSON file containing Google Cloud service account credentials.",
+        "required": true
+      },
+      {
+        "name": "clean_query",
+        "display_name": "Clean Query",
+        "type": "bool",
+        "info": "When enabled, this will automatically clean up your SQL query.",
+        "required": false
+      },
+      {
+        "name": "query",
+        "display_name": "SQL Query",
+        "type": "str",
+        "info": "The SQL query to execute on BigQuery.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GoogleDriveComponent",
+    "display_name": "Google Drive Loader",
+    "description": "Loads documents from Google Drive using provided credentials.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "document_id",
+        "display_name": "Document ID",
+        "type": "str",
+        "info": "Single Google Drive document ID",
+        "required": true
+      },
+      {
+        "name": "json_string",
+        "display_name": "JSON String of the Service Account Token",
+        "type": "str",
+        "info": "JSON string containing OAuth 2.0 access token information for service account access",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GoogleDriveSearchComponent",
+    "display_name": "Google Drive Search",
+    "description": "Searches Google Drive files using provided credentials and query parameters.",
+    "base_classes": [
+      "Data",
+      "Text"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "query_item",
+        "display_name": "Query Item",
+        "type": "str",
+        "info": "The field to query.",
+        "required": true
+      },
+      {
+        "name": "query_string",
+        "display_name": "Query String",
+        "type": "str",
+        "info": "The query string used for searching. You can edit this manually.",
+        "required": false
+      },
+      {
+        "name": "search_term",
+        "display_name": "Search Term",
+        "type": "str",
+        "info": "The value to search for in the specified query item.",
+        "required": true
+      },
+      {
+        "name": "token_string",
+        "display_name": "Token String",
+        "type": "str",
+        "info": "JSON string containing OAuth 2.0 access token information for service account access",
+        "required": true
+      },
+      {
+        "name": "valid_operator",
+        "display_name": "Valid Operator",
+        "type": "str",
+        "info": "Operator to use in the query.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GoogleGenerativeAIModel",
+    "display_name": "Google Generative AI",
+    "description": "Generate text using Google Generative AI.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Google API Key",
+        "type": "str",
+        "info": "The Google API Key to use for the Google Generative AI.",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_output_tokens",
+        "display_name": "Max Output Tokens",
+        "type": "int",
+        "info": "The maximum number of tokens to generate.",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model",
+        "type": "str",
+        "info": "The name of the model to use.",
+        "required": false
+      },
+      {
+        "name": "n",
+        "display_name": "N",
+        "type": "int",
+        "info": "Number of chat completions to generate for each prompt. Note that the API may not return the full n completions if duplicates are generated.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "Controls randomness. Lower values are more deterministic, higher values are more creative.",
+        "required": false
+      },
+      {
+        "name": "tool_model_enabled",
+        "display_name": "Tool Model Enabled",
+        "type": "bool",
+        "info": "Whether to use the tool model.",
+        "required": false
+      },
+      {
+        "name": "top_k",
+        "display_name": "Top K",
+        "type": "int",
+        "info": "Decode using top-k sampling: consider the set of top_k most probable tokens. Must be positive.",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "The maximum cumulative probability of tokens to consider when sampling.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "Google Generative AI Embeddings",
+    "display_name": "Google Generative AI Embeddings",
+    "description": "Connect to Google's generative AI embeddings service using the GoogleGenerativeAIEmbeddings class, found in the langchain-google-genai package.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "https://python.langchain.com/v0.2/docs/integrations/text_embedding/google_generative_ai/",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Google Generative AI API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GoogleOAuthToken",
+    "display_name": "Google OAuth Token",
+    "description": "Generates a JSON string with your Google OAuth token.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://developers.google.com/identity/protocols/oauth2/web-server?hl=pt-br#python_1",
+    "inputs": [
+      {
+        "name": "oauth_credentials",
+        "display_name": "Credentials File",
+        "type": "file",
+        "info": "Input OAuth Credentials file (e.g. credentials.json).",
+        "required": true
+      },
+      {
+        "name": "scopes",
+        "display_name": "Scopes",
+        "type": "str",
+        "info": "Input scopes for your application.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GoogleSearchAPICore",
+    "display_name": "Google Search API",
+    "description": "Call Google Search API and return results as a DataFrame.",
+    "base_classes": [
+      "DataFrame"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "google_api_key",
+        "display_name": "Google API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "google_cse_id",
+        "display_name": "Google CSE ID",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "k",
+        "display_name": "Number of results",
+        "type": "int",
+        "info": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "google",
+    "name": "GoogleSerperAPICore",
+    "display_name": "Google Serper API",
+    "description": "Call the Serper.dev Google Search API.",
+    "base_classes": [
+      "DataFrame"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "k",
+        "display_name": "Number of results",
+        "type": "int",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "serper_api_key",
+        "display_name": "Serper API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "groq",
+    "name": "GroqModel",
+    "display_name": "Groq",
+    "description": "Generate text using Groq.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Groq API Key",
+        "type": "str",
+        "info": "API key for the Groq API.",
+        "required": false
+      },
+      {
+        "name": "base_url",
+        "display_name": "Groq API Base",
+        "type": "str",
+        "info": "Base URL path for API requests, leave blank if not using a proxy or service emulator.",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Output Tokens",
+        "type": "int",
+        "info": "The maximum number of tokens to generate.",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model",
+        "type": "str",
+        "info": "The name of the model to use.",
+        "required": false
+      },
+      {
+        "name": "n",
+        "display_name": "N",
+        "type": "int",
+        "info": "Number of chat completions to generate for each prompt. Note that the API may not return the full n completions if duplicates are generated.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "Run inference with this temperature. Must by in the closed interval [0.0, 1.0].",
+        "required": false
+      },
+      {
+        "name": "tool_model_enabled",
+        "display_name": "Enable Tool Models",
+        "type": "bool",
+        "info": "Select if you want to use models that can work with tools. If yes, only those models will be shown.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "huggingface",
+    "name": "HuggingFaceModel",
+    "display_name": "Hugging Face",
+    "description": "Generate text using Hugging Face Inference APIs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "custom_model",
+        "display_name": "Custom Model ID",
+        "type": "str",
+        "info": "Enter a custom model ID from Hugging Face Hub",
+        "required": true
+      },
+      {
+        "name": "huggingfacehub_api_token",
+        "display_name": "HuggingFace HubAPI Token",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "inference_endpoint",
+        "display_name": "Inference Endpoint",
+        "type": "str",
+        "info": "Custom inference endpoint URL.",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_new_tokens",
+        "display_name": "Max New Tokens",
+        "type": "int",
+        "info": "Maximum number of generated tokens",
+        "required": false
+      },
+      {
+        "name": "model_id",
+        "display_name": "Model ID",
+        "type": "str",
+        "info": "Select a model from Hugging Face Hub",
+        "required": true
+      },
+      {
+        "name": "model_kwargs",
+        "display_name": "Model Keyword Arguments",
+        "type": "dict",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "repetition_penalty",
+        "display_name": "Repetition Penalty",
+        "type": "float",
+        "info": "The parameter for repetition penalty. 1.0 means no penalty.",
+        "required": false
+      },
+      {
+        "name": "retry_attempts",
+        "display_name": "Retry Attempts",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "task",
+        "display_name": "Task",
+        "type": "str",
+        "info": "The task to call the model with. Should be a task that returns `generated_text` or `summary_text`.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "The value used to module the logits distribution",
+        "required": false
+      },
+      {
+        "name": "top_k",
+        "display_name": "Top K",
+        "type": "int",
+        "info": "The number of highest probability vocabulary tokens to keep for top-k-filtering",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "If set to < 1, only the smallest set of most probable tokens with probabilities that add up to `top_p` or higher are kept for generation",
+        "required": false
+      },
+      {
+        "name": "typical_p",
+        "display_name": "Typical P",
+        "type": "float",
+        "info": "Typical Decoding mass.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "huggingface",
+    "name": "HuggingFaceInferenceAPIEmbeddings",
+    "display_name": "Hugging Face Embeddings Inference",
+    "description": "Generate embeddings using Hugging Face Text Embeddings Inference (TEI)",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "https://huggingface.co/docs/text-embeddings-inference/index",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "HuggingFace API Key",
+        "type": "str",
+        "info": "Required for non-local inference endpoints. Local inference does not require an API Key.",
+        "required": false
+      },
+      {
+        "name": "inference_endpoint",
+        "display_name": "Inference Endpoint",
+        "type": "str",
+        "info": "Custom inference endpoint URL.",
+        "required": true
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "The name of the model to use for text embeddings.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackAIScraper",
+    "display_name": "AI Scraper",
+    "description": "Scrape any website instantly and get consistent structured data         in seconds without writing any css selector code",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/scrape",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "element_prompts",
+        "display_name": "Element Prompts",
+        "type": "str",
+        "info": "Items on the page to be scraped (maximum 5). E.g. 'Plan price', 'Plan title'",
+        "required": true
+      },
+      {
+        "name": "html",
+        "display_name": "HTML",
+        "type": "str",
+        "info": "HTML content to scrape. Either url or html is required, but not both.",
+        "required": false
+      },
+      {
+        "name": "root_element_selector",
+        "display_name": "Root Element Selector",
+        "type": "str",
+        "info": "CSS selector to limit the scope of scraping to a specific element and its children",
+        "required": false
+      },
+      {
+        "name": "url",
+        "display_name": "URL",
+        "type": "str",
+        "info": "URL of the page to scrape. Either url or html is required, but not both.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackAISearch",
+    "display_name": "AI Web Search",
+    "description": "Effortlessly search the Web and get access to high-quality results powered with AI.",
+    "base_classes": [
+      "Data",
+      "Message"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/web/ai-search",
+    "inputs": [
+      {
+        "name": "ai_overview",
+        "display_name": "AI Overview",
+        "type": "bool",
+        "info": "Include AI powered overview in the search results",
+        "required": false
+      },
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "query",
+        "display_name": "Query",
+        "type": "query",
+        "info": "The search value. The maximum query character length is 400",
+        "required": true
+      },
+      {
+        "name": "safe_search",
+        "display_name": "Safe Search",
+        "type": "str",
+        "info": "Enable safe search to filter out adult content",
+        "required": false
+      },
+      {
+        "name": "spell_check",
+        "display_name": "Spell Check",
+        "type": "bool",
+        "info": "Spell check the search query",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackFileRead",
+    "display_name": "File Read",
+    "description": "Read any previously uploaded file seamlessly from         JigsawStack File Storage and use it in your AI applications.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/store/file/get",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "key",
+        "display_name": "Key",
+        "type": "str",
+        "info": "The key used to retrieve the file from JigsawStack File Storage.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackFileUpload",
+    "display_name": "File Upload",
+    "description": "Store any file seamlessly on JigsawStack File Storage and use it in your AI applications.         Supports various file types including images, documents, and more.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/store/file/add",
+    "inputs": [
+      {
+        "name": "file",
+        "display_name": "File",
+        "type": "file",
+        "info": "Upload file to be stored on JigsawStack File Storage.",
+        "required": true
+      },
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "key",
+        "display_name": "Key",
+        "type": "str",
+        "info": "The key used to store the file on JigsawStack File Storage.                 If not provided, a unique key will be generated.",
+        "required": false
+      },
+      {
+        "name": "overwrite",
+        "display_name": "Overwrite Existing File",
+        "type": "bool",
+        "info": "If true, will overwrite the existing file with the same key.                 If false, will return an error if the file already exists.",
+        "required": false
+      },
+      {
+        "name": "temp_public_url",
+        "display_name": "Return Temporary Public URL",
+        "type": "bool",
+        "info": "If true, will return a temporary public URL which lasts for a limited time.                 If false, will return the file store key which can only be accessed by the owner.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackImageGeneration",
+    "display_name": "Image Generation",
+    "description": "Generate an image based on the given text by employing AI models like Flux,         Stable Diffusion, and other top models.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/image-generation",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "aspect_ratio",
+        "display_name": "Aspect Ratio",
+        "type": "str",
+        "info": "The aspect ratio of the generated image. Must be one of the following:                '1:1', '16:9', '21:9', '3:2', '2:3', '4:5', '5:4', '3:4', '4:3', '9:16', '9:21'                 Default is 1:1.",
+        "required": false
+      },
+      {
+        "name": "file_store_key",
+        "display_name": "File Store Key",
+        "type": "str",
+        "info": "The key used to store the image on Jigsawstack File Storage. Not required if url is specified.",
+        "required": false
+      },
+      {
+        "name": "guidance",
+        "display_name": "Guidance Scale",
+        "type": "int",
+        "info": "Higher guidance forces the model to better follow the prompt,                 but may result in lower quality output. Must be between 1-28.",
+        "required": false
+      },
+      {
+        "name": "height",
+        "display_name": "Height",
+        "type": "int",
+        "info": "The height of the image. Must be between 256-1920 pixels.",
+        "required": false
+      },
+      {
+        "name": "negative_prompt",
+        "display_name": "Negative Prompt",
+        "type": "str",
+        "info": "The text prompt to avoid in the generated image.                 Must be between 1-5000 characters.",
+        "required": false
+      },
+      {
+        "name": "output_format",
+        "display_name": "Output Format",
+        "type": "str",
+        "info": "The output format of the generated image. Must be one of the following values:                png or svg",
+        "required": false
+      },
+      {
+        "name": "prompt",
+        "display_name": "Prompt",
+        "type": "str",
+        "info": "The text prompt to generate the image from. Must be between 1-5000 characters.",
+        "required": true
+      },
+      {
+        "name": "seed",
+        "display_name": "Seed",
+        "type": "int",
+        "info": "Makes generation deterministic.                Using the same seed and set of parameters will produce identical image each time.",
+        "required": false
+      },
+      {
+        "name": "steps",
+        "display_name": "Steps",
+        "type": "int",
+        "info": "The number of denoising steps. Must be between 1-90.                 Higher values produce better quality images but take more time to generate.",
+        "required": false
+      },
+      {
+        "name": "url",
+        "display_name": "URL",
+        "type": "str",
+        "info": "A valid URL where the generated image will be sent.",
+        "required": false
+      },
+      {
+        "name": "width",
+        "display_name": "Width",
+        "type": "int",
+        "info": "The width of the image. Must be between 256-1920 pixels.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackNSFW",
+    "display_name": "NSFW Detection",
+    "description": "Detect if image/video contains NSFW content",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/nsfw",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "url",
+        "display_name": "URL",
+        "type": "str",
+        "info": "URL of the image or video to analyze",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackObjectDetection",
+    "display_name": "Object Detection",
+    "description": "Perform object detection on images using JigsawStack's Object Detection Model,         capable of image grounding, segmentation and computer use.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/object-detection",
+    "inputs": [
+      {
+        "name": "annotated_image",
+        "display_name": "Return Annotated Image",
+        "type": "bool",
+        "info": "If true, will return an url for annotated image with detected objects.",
+        "required": false
+      },
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "features",
+        "display_name": "Features",
+        "type": "str",
+        "info": "Select the features to enable for object detection",
+        "required": false
+      },
+      {
+        "name": "file_store_key",
+        "display_name": "File Store Key",
+        "type": "str",
+        "info": "The key used to store the image on Jigsawstack File Storage. Not required if url is specified.",
+        "required": false
+      },
+      {
+        "name": "prompts",
+        "display_name": "Prompts",
+        "type": "str",
+        "info": "The prompts to ground the object detection model.                 You can pass a list of comma-separated prompts to extract different information from the image.",
+        "required": false
+      },
+      {
+        "name": "return_type",
+        "display_name": "Return Type",
+        "type": "str",
+        "info": "Select the return type for the object detection results such as masks or annotations.",
+        "required": false
+      },
+      {
+        "name": "url",
+        "display_name": "URL",
+        "type": "str",
+        "info": "The image URL. Not required if file_store_key is specified.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackSentiment",
+    "display_name": "Sentiment Analysis",
+    "description": "Analyze sentiment of text using JigsawStack AI",
+    "base_classes": [
+      "Data",
+      "Message"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/sentiment",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "text",
+        "display_name": "Text",
+        "type": "str",
+        "info": "Text to analyze for sentiment",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackTextToSQL",
+    "display_name": "Text to SQL",
+    "description": "Convert natural language to SQL queries using JigsawStack AI",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/text-to-sql",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "file_store_key",
+        "display_name": "File Store Key",
+        "type": "str",
+        "info": "The key used to store the database schema on Jigsawstack file Storage. Not required if sql_schema is specified.",
+        "required": false
+      },
+      {
+        "name": "prompt",
+        "display_name": "Prompt",
+        "type": "query",
+        "info": "Natural language description of the SQL query you want to generate",
+        "required": true
+      },
+      {
+        "name": "sql_schema",
+        "display_name": "SQL Schema",
+        "type": "str",
+        "info": "The database schema information. Can be a CREATE TABLE statement or schema description. Specifying this parameter improves SQL generation accuracy by applying database-specific syntax and optimizations.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackTextTranslate",
+    "display_name": "Text Translate",
+    "description": "Translate text from one language to another with support for multiple text formats.",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/translate",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "target_language",
+        "display_name": "Target Language",
+        "type": "str",
+        "info": "The language code of the target language to translate to.                 Language code is identified by a unique ISO 639-1 two-letter code",
+        "required": true
+      },
+      {
+        "name": "text",
+        "display_name": "Text",
+        "type": "str",
+        "info": "The text to translate. This can be a single string or a list of strings.                 If a list is provided, each string will be translated separately.",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "jigsawstack",
+    "name": "JigsawStackVOCR",
+    "display_name": "VOCR",
+    "description": "Extract data from any document type in a consistent structure with fine-tuned         vLLMs for the highest accuracy",
+    "base_classes": [
+      "Data"
+    ],
+    "documentation": "https://jigsawstack.com/docs/api-reference/ai/vocr",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "JigsawStack API Key",
+        "type": "str",
+        "info": "Your JigsawStack API key for authentication",
+        "required": true
+      },
+      {
+        "name": "file_store_key",
+        "display_name": "File Store Key",
+        "type": "str",
+        "info": "The key used to store the image on Jigsawstack File Storage. Not required if url is specified.",
+        "required": false
+      },
+      {
+        "name": "page_range_end",
+        "display_name": "Page Range End",
+        "type": "int",
+        "info": "Page range end limit for the document. If not specified, all pages will be processed.",
+        "required": false
+      },
+      {
+        "name": "page_range_start",
+        "display_name": "Page Range",
+        "type": "int",
+        "info": "Page range start limit for the document. If not specified, all pages will be processed.",
+        "required": false
+      },
+      {
+        "name": "prompts",
+        "display_name": "Prompts",
+        "type": "str",
+        "info": "The prompts used to describe the image. Default prompt is Describe the image in detail.                 You can pass a list of comma-separated prompts to extract different information from the image.",
+        "required": false
+      },
+      {
+        "name": "url",
+        "display_name": "URL",
+        "type": "str",
+        "info": "The image or document url. Not required if file_store_key is specified.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "mistral",
+    "name": "MistralModel",
+    "display_name": "MistralAI",
+    "description": "Generates text using MistralAI LLMs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "Mistral API Key",
+        "type": "str",
+        "info": "The Mistral API Key to use for the Mistral model.",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_concurrent_requests",
+        "display_name": "Max Concurrent Requests",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Tokens",
+        "type": "int",
+        "info": "The maximum number of tokens to generate. Set to 0 for unlimited tokens.",
+        "required": false
+      },
+      {
+        "name": "mistral_api_base",
+        "display_name": "Mistral API Base",
+        "type": "str",
+        "info": "The base URL of the Mistral API. Defaults to https://api.mistral.ai/v1. You can change this to use other APIs like JinaChat, LocalAI and Prem.",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "random_seed",
+        "display_name": "Random Seed",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "safe_mode",
+        "display_name": "Safe Mode",
+        "type": "bool",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "float",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "timeout",
+        "display_name": "Timeout",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "mistral",
+    "name": "MistalAIEmbeddings",
+    "display_name": "MistralAI Embeddings",
+    "description": "Generate embeddings using MistralAI models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "endpoint",
+        "display_name": "API Endpoint",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_concurrent_requests",
+        "display_name": "Max Concurrent Requests",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "mistral_api_key",
+        "display_name": "Mistral API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "model",
+        "display_name": "Model",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "timeout",
+        "display_name": "Request Timeout",
+        "type": "int",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "ollama",
+    "name": "OllamaModel",
+    "display_name": "Ollama",
+    "description": "Generate text using Ollama Local LLMs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "base_url",
+        "display_name": "Base URL",
+        "type": "str",
+        "info": "Endpoint of the Ollama API.",
+        "required": false
+      },
+      {
+        "name": "format",
+        "display_name": "Format",
+        "type": "str",
+        "info": "Specify the format of the output (e.g., json).",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "metadata",
+        "display_name": "Metadata",
+        "type": "dict",
+        "info": "Metadata to add to the run trace.",
+        "required": false
+      },
+      {
+        "name": "mirostat",
+        "display_name": "Mirostat",
+        "type": "str",
+        "info": "Enable/disable Mirostat sampling for controlling perplexity.",
+        "required": false
+      },
+      {
+        "name": "mirostat_eta",
+        "display_name": "Mirostat Eta",
+        "type": "float",
+        "info": "Learning rate for Mirostat algorithm. (Default: 0.1)",
+        "required": false
+      },
+      {
+        "name": "mirostat_tau",
+        "display_name": "Mirostat Tau",
+        "type": "float",
+        "info": "Controls the balance between coherence and diversity of the output. (Default: 5.0)",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "Refer to https://ollama.com/library for more models.",
+        "required": false
+      },
+      {
+        "name": "num_ctx",
+        "display_name": "Context Window Size",
+        "type": "int",
+        "info": "Size of the context window for generating tokens. (Default: 2048)",
+        "required": false
+      },
+      {
+        "name": "num_gpu",
+        "display_name": "Number of GPUs",
+        "type": "int",
+        "info": "Number of GPUs to use for computation. (Default: 1 on macOS, 0 to disable)",
+        "required": false
+      },
+      {
+        "name": "num_thread",
+        "display_name": "Number of Threads",
+        "type": "int",
+        "info": "Number of threads to use during computation. (Default: detected for optimal performance)",
+        "required": false
+      },
+      {
+        "name": "repeat_last_n",
+        "display_name": "Repeat Last N",
+        "type": "int",
+        "info": "How far back the model looks to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)",
+        "required": false
+      },
+      {
+        "name": "repeat_penalty",
+        "display_name": "Repeat Penalty",
+        "type": "float",
+        "info": "Penalty for repetitions in generated text. (Default: 1.1)",
+        "required": false
+      },
+      {
+        "name": "stop_tokens",
+        "display_name": "Stop Tokens",
+        "type": "str",
+        "info": "Comma-separated list of tokens to signal the model to stop generating text.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system",
+        "display_name": "System",
+        "type": "str",
+        "info": "System to use for generating text.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "tags",
+        "display_name": "Tags",
+        "type": "str",
+        "info": "Comma-separated list of tags to add to the run trace.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "template",
+        "display_name": "Template",
+        "type": "str",
+        "info": "Template to use for generating text.",
+        "required": false
+      },
+      {
+        "name": "tfs_z",
+        "display_name": "TFS Z",
+        "type": "float",
+        "info": "Tail free sampling value. (Default: 1)",
+        "required": false
+      },
+      {
+        "name": "timeout",
+        "display_name": "Timeout",
+        "type": "int",
+        "info": "Timeout for the request stream.",
+        "required": false
+      },
+      {
+        "name": "tool_model_enabled",
+        "display_name": "Tool Model Enabled",
+        "type": "bool",
+        "info": "Whether to enable tool calling in the model.",
+        "required": false
+      },
+      {
+        "name": "top_k",
+        "display_name": "Top K",
+        "type": "int",
+        "info": "Limits token selection to top K. (Default: 40)",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "Works together with top-k. (Default: 0.9)",
+        "required": false
+      },
+      {
+        "name": "verbose",
+        "display_name": "Verbose",
+        "type": "bool",
+        "info": "Whether to print out response text.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "ollama",
+    "name": "OllamaEmbeddings",
+    "display_name": "Ollama Embeddings",
+    "description": "Generate embeddings using Ollama models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "https://python.langchain.com/docs/integrations/text_embedding/ollama",
+    "inputs": [
+      {
+        "name": "base_url",
+        "display_name": "Ollama Base URL",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "model_name",
+        "display_name": "Ollama Model",
+        "type": "str",
+        "info": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "category": "openai",
+    "name": "OpenAIEmbeddings",
+    "display_name": "OpenAI Embeddings",
+    "description": "Generate embeddings using OpenAI models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "chunk_size",
+        "display_name": "Chunk Size",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "client",
+        "display_name": "Client",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "default_headers",
+        "display_name": "Default Headers",
+        "type": "dict",
+        "info": "Default headers to use for the API request.",
+        "required": false
+      },
+      {
+        "name": "default_query",
+        "display_name": "Default Query",
+        "type": "dict",
+        "info": "Default query parameters to use for the API request.",
+        "required": false
+      },
+      {
+        "name": "deployment",
+        "display_name": "Deployment",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "dimensions",
+        "display_name": "Dimensions",
+        "type": "int",
+        "info": "The number of dimensions the resulting output embeddings should have. Only supported by certain models.",
+        "required": false
+      },
+      {
+        "name": "embedding_ctx_length",
+        "display_name": "Embedding Context Length",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model",
+        "display_name": "Model",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model_kwargs",
+        "display_name": "Model Kwargs",
+        "type": "dict",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "openai_api_base",
+        "display_name": "OpenAI API Base",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "openai_api_key",
+        "display_name": "OpenAI API Key",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "openai_api_type",
+        "display_name": "OpenAI API Type",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "openai_api_version",
+        "display_name": "OpenAI API Version",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "openai_organization",
+        "display_name": "OpenAI Organization",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "openai_proxy",
+        "display_name": "OpenAI Proxy",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "request_timeout",
+        "display_name": "Request Timeout",
+        "type": "float",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "show_progress_bar",
+        "display_name": "Show Progress Bar",
+        "type": "bool",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "skip_empty",
+        "display_name": "Skip Empty",
+        "type": "bool",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "tiktoken_enable",
+        "display_name": "TikToken Enable",
+        "type": "bool",
+        "info": "If False, you must have transformers installed.",
+        "required": false
+      },
+      {
+        "name": "tiktoken_model_name",
+        "display_name": "TikToken Model Name",
+        "type": "str",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "openai",
+    "name": "OpenAIModel",
+    "display_name": "OpenAI",
+    "description": "Generates text using OpenAI LLMs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "OpenAI API Key",
+        "type": "str",
+        "info": "The OpenAI API Key to use for the OpenAI model.",
+        "required": true
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "json_mode",
+        "display_name": "JSON Mode",
+        "type": "bool",
+        "info": "If True, it will output JSON regardless of passing a schema.",
+        "required": false
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "The maximum number of retries to make when generating.",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Tokens",
+        "type": "int",
+        "info": "The maximum number of tokens to generate. Set to 0 for unlimited tokens.",
+        "required": false
+      },
+      {
+        "name": "model_kwargs",
+        "display_name": "Model Kwargs",
+        "type": "dict",
+        "info": "Additional keyword arguments to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "openai_api_base",
+        "display_name": "OpenAI API Base",
+        "type": "str",
+        "info": "The base URL of the OpenAI API. Defaults to https://api.openai.com/v1. You can change this to use other APIs like JinaChat, LocalAI and Prem.",
+        "required": false
+      },
+      {
+        "name": "seed",
+        "display_name": "Seed",
+        "type": "int",
+        "info": "The seed controls the reproducibility of the job.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "timeout",
+        "display_name": "Timeout",
+        "type": "int",
+        "info": "The timeout for requests to OpenAI completion API.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "openrouter",
+    "name": "OpenRouterComponent",
+    "display_name": "OpenRouter",
+    "description": "OpenRouter provides unified access to multiple AI models from different providers through a single API.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "api_key",
+        "display_name": "OpenRouter API Key",
+        "type": "str",
+        "info": "Your OpenRouter API key",
+        "required": true
+      },
+      {
+        "name": "app_name",
+        "display_name": "App Name",
+        "type": "str",
+        "info": "Your app name for OpenRouter rankings",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_tokens",
+        "display_name": "Max Tokens",
+        "type": "int",
+        "info": "Maximum number of tokens to generate",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model",
+        "type": "str",
+        "info": "The model to use for chat completion",
+        "required": true
+      },
+      {
+        "name": "provider",
+        "display_name": "Provider",
+        "type": "str",
+        "info": "The AI model provider",
+        "required": true
+      },
+      {
+        "name": "site_url",
+        "display_name": "Site URL",
+        "type": "str",
+        "info": "Your site URL for OpenRouter rankings",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "slider",
+        "info": "Controls randomness. Lower values are more deterministic, higher values are more creative.",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "vertexai",
+    "name": "VertexAiModel",
+    "display_name": "Vertex AI",
+    "description": "Generate text using Vertex AI LLMs.",
+    "base_classes": [
+      "LanguageModel",
+      "Message"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "credentials",
+        "display_name": "Credentials",
+        "type": "file",
+        "info": "JSON credentials file. Leave empty to fallback to environment variables",
+        "required": false
+      },
+      {
+        "name": "input_value",
+        "display_name": "Input",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "location",
+        "display_name": "Location",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_output_tokens",
+        "display_name": "Max Output Tokens",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "project",
+        "display_name": "Project",
+        "type": "str",
+        "info": "The project ID.",
+        "required": false
+      },
+      {
+        "name": "stream",
+        "display_name": "Stream",
+        "type": "bool",
+        "info": "Stream the response from the model. Streaming works only in Chat.",
+        "required": false
+      },
+      {
+        "name": "system_message",
+        "display_name": "System Message",
+        "type": "str",
+        "info": "System message to pass to the model.",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "float",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "top_k",
+        "display_name": "Top K",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "verbose",
+        "display_name": "Verbose",
+        "type": "bool",
+        "info": "",
+        "required": false
+      }
+    ]
+  },
+  {
+    "category": "vertexai",
+    "name": "VertexAIEmbeddings",
+    "display_name": "Vertex AI Embeddings",
+    "description": "Generate embeddings using Google Cloud Vertex AI models.",
+    "base_classes": [
+      "Embeddings"
+    ],
+    "documentation": "",
+    "inputs": [
+      {
+        "name": "credentials",
+        "display_name": "Credentials",
+        "type": "file",
+        "info": "JSON credentials file. Leave empty to fallback to environment variables",
+        "required": true
+      },
+      {
+        "name": "location",
+        "display_name": "Location",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_output_tokens",
+        "display_name": "Max Output Tokens",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "max_retries",
+        "display_name": "Max Retries",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "model_name",
+        "display_name": "Model Name",
+        "type": "str",
+        "info": "",
+        "required": true
+      },
+      {
+        "name": "n",
+        "display_name": "N",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "project",
+        "display_name": "Project",
+        "type": "str",
+        "info": "The project ID.",
+        "required": false
+      },
+      {
+        "name": "request_parallelism",
+        "display_name": "Request Parallelism",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "stop_sequences",
+        "display_name": "Stop",
+        "type": "str",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "streaming",
+        "display_name": "Streaming",
+        "type": "bool",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "temperature",
+        "display_name": "Temperature",
+        "type": "float",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "top_k",
+        "display_name": "Top K",
+        "type": "int",
+        "info": "",
+        "required": false
+      },
+      {
+        "name": "top_p",
+        "display_name": "Top P",
+        "type": "float",
+        "info": "",
+        "required": false
+      }
+    ]
+  }
+]

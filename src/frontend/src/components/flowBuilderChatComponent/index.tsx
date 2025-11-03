@@ -60,38 +60,44 @@ export const FlowBuilderChat: React.FC<FlowBuilderChatProps> = ({
 
   const buildFlow = async (userRequest: string) => {
     setIsLoading(true);
-    
+
     try {
       // Add user message
       addMessage({
         type: "user",
         content: userRequest,
-      });      // Call the Flow Builder API
+      });
+      // Call the Flow Builder API with no persistence to avoid new entries
       const response = await api.post("/api/v1/flow_builder/build", {
         query: userRequest,
         flow_name: `Generated Flow - ${new Date().toLocaleDateString()}`,
+        persist: false,
       });
 
-      const { flow_json, explanation, components_used } = response.data;
+      const { flow_json, explanation, components_used } = response.data as any;
 
-      // Add assistant response with explanation
-      let assistantMessage = `Great! I've created your flow with the following components:\n\n`;
-      assistantMessage += `**Components Used:** ${components_used.join(", ")}\n\n`;
-      assistantMessage += `**Explanation:** ${explanation}\n\n`;
-      assistantMessage += `Would you like me to load this flow into your workspace?`;
+      // Immediately load the flow into the current workspace (no new entry)
+      if (flow_json && flow_json.data) {
+        setNodes(flow_json.data.nodes || []);
+        setEdges(flow_json.data.edges || []);
+      }
+
+      // Add assistant response with summary
+      let assistantMessage = `Created and loaded your flow.\n\n`;
+      assistantMessage += `**Components Used:** ${(components_used || []).join(", ")}\n\n`;
+      if (explanation) assistantMessage += `**Explanation:** ${explanation}`;
 
       addMessage({
         type: "assistant",
         content: assistantMessage,
         flowData: flow_json,
       });
-
     } catch (error: any) {
       console.error("Error building flow:", error);
       addMessage({
         type: "assistant",
         content: `I encountered an error while building your flow: ${
-          error.response?.data?.detail || error.message || "Unknown error"
+          error?.response?.data?.detail || error?.message || "Unknown error"
         }. Please try rephrasing your request or contact support if the issue persists.`,
       });
     } finally {
@@ -99,21 +105,35 @@ export const FlowBuilderChat: React.FC<FlowBuilderChatProps> = ({
     }
   };
 
-  const handleLoadFlow = (flowData: any) => {
+  const handleLoadFlow = async (flowData: any) => {
     try {
-      if (flowData && flowData.data) {        // Load the flow into the current workspace
-        setNodes(flowData.data.nodes || []);
-        setEdges(flowData.data.edges || []);
-          setSuccessData({
-          title: "Flow Loaded Successfully",
-        });
-        
-        // Close the chat after loading
+      const { flow_json, flow_id } = flowData || {};
+
+      // Prefer loading the persisted flow if an id is available
+      if (flow_id) {
+        try {
+          const res = await api.get(`/api/v1/flows/${flow_id}`);
+          const persistedFlow = res.data;
+          // Set the current flow so it appears in the sidebar and state
+          addFlow(persistedFlow);
+          setSuccessData({ title: "Flow Loaded Successfully" });
+          onClose();
+          return;
+        } catch (e) {
+          console.warn("Falling back to local flow_json due to fetch error:", e);
+        }
+      }
+
+      // Fallback: load the ephemeral flow_json directly
+      if (flow_json && flow_json.data) {
+        setNodes(flow_json.data.nodes || []);
+        setEdges(flow_json.data.edges || []);
+        setSuccessData({ title: "Flow Loaded Successfully" });
         onClose();
-      }    } catch (error) {
-      console.error("Error loading flow:", error);      setErrorData({
-        title: "Error Loading Flow",
-      });
+      }
+    } catch (error) {
+      console.error("Error loading flow:", error);
+      setErrorData({ title: "Error Loading Flow" });
     }
   };
 

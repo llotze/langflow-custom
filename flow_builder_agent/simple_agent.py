@@ -9,11 +9,22 @@ import logging
 import asyncio
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
+from pathlib import Path
 
 from openai import AsyncOpenAI, OpenAI
-import google.generativeai as genai
+# Optional Gemini dependency: import lazily
+try:
+    import google.generativeai as genai  # type: ignore
+except Exception:  # pragma: no cover
+    genai = None
 
 from .rag.component_rag import ComponentRAG
+from .config import Config
+# NEW: Provider-focused Gemini RAG grounding
+try:
+    from .rag.gemini_rag import GeminiComponentRAG
+except Exception:  # pragma: no cover
+    GeminiComponentRAG = None
 
 
 class SimpleFlowBuilderAgent:
@@ -24,38 +35,74 @@ class SimpleFlowBuilderAgent:
     Langflow FlowCreate models for database operations.
     """
     
-    def __init__(self, api_key: str = None, model_name: str = None, 
-                 provider: str = "gemini", openai_api_key: str = None):
+    def __init__(
+        self, 
+        api_key: Optional[str] = None, 
+        model_name: Optional[str] = None, 
+        provider: Optional[str] = None,
+        langflow_api_url: Optional[str] = None,
+        # Backwards compatibility
+        openai_api_key: Optional[str] = None
+    ):
         """
         Initialize the Simple Flow Builder Agent.
         
         Args:
-            api_key: API key for the chosen provider (Gemini or OpenAI)
-            model_name: Model to use (default: "gemini-2.5-flash" for Gemini, "gpt-4o" for OpenAI)
-            provider: Either "gemini" or "openai" (default: "gemini")            openai_api_key: Backwards compatibility - if provided, uses OpenAI
+            api_key: API key for the chosen provider. If None, uses config.
+            model_name: Model to use. If None, uses config.
+            provider: Either "gemini" or "openai". If None, uses config.
+            langflow_api_url: URL of the Langflow API. If None, uses config.
+            openai_api_key: Backwards compatibility - if provided, uses OpenAI
         """
-        self.rag = ComponentRAG()
-        self.logger = logging.getLogger(__name__)
-        
         # Handle backwards compatibility
         if openai_api_key:
             provider = "openai"
             api_key = openai_api_key
-            model_name = model_name or "gpt-4o"
         
-        self.provider = provider
+        # Use config values as defaults
+        self.provider = provider or Config.PROVIDER
+        self.model_name = model_name or Config.MODEL_NAME
+        self.langflow_api_url = langflow_api_url or Config.LANGFLOW_API_URL
         
-        if provider == "gemini":
-            self.model_name = model_name or "gemini-2.5-flash"
+        # Get API key
+        if api_key is None:
+            api_key = Config.get_api_key()
+        
+        self.rag = ComponentRAG(langflow_api_url=self.langflow_api_url)
+        self.logger = logging.getLogger(__name__)
+        # Initialize grounded Gemini RAG (optional) to reduce hallucinations
+        self.grounded_rag = None
+        if (provider or self.provider) == "gemini" and GeminiComponentRAG is not None:
+            try:
+                self.grounded_rag = GeminiComponentRAG(langflow_api_url=self.langflow_api_url)
+                self.logger.info("🔎 GeminiComponentRAG initialized for provider-focused grounding")
+            except Exception as e:
+                self.logger.warning(f"GeminiComponentRAG not available: {e}")
+        
+        # Adjust model name if provider was changed via openai_api_key
+        if openai_api_key and self.model_name.startswith("gemini"):
+            self.model_name = "gpt-4o"
+        
+        # Initialize the appropriate client
+        if self.provider == "gemini":
+            if genai is None:
+                raise ValueError(
+                    "google-generativeai is not installed but provider='gemini'. Install it or switch provider."
+                )
+            if not api_key:
+                raise ValueError("Gemini API key required. Set GOOGLE_API_KEY in .env file.")
             genai.configure(api_key=api_key)
             self.client = genai.GenerativeModel(self.model_name)
             self.async_client = None
-        elif provider == "openai":
-            self.model_name = model_name or "gpt-4o"
+        elif self.provider == "openai":
+            if not api_key:
+                raise ValueError("OpenAI API key required. Set OPENAI_API_KEY in .env file.")
             self.client = OpenAI(api_key=api_key)
             self.async_client = AsyncOpenAI(api_key=api_key)
         else:
             raise ValueError(f"Unsupported provider: {provider}. Use 'gemini' or 'openai'")
+        
+        self.logger.info(f"✅ Initialized SimpleFlowBuilderAgent with {self.provider} ({self.model_name})")
     
     async def build_flow_async(self, user_request: str, flow_name: str = None) -> Dict[str, Any]:
         """
@@ -179,8 +226,9 @@ Return ONLY the JSON structure for the flow data, no other text.
             self.logger.info(f"🤖 CHECKPOINT 4a: Using provider: {self.provider}")
             
             if self.provider == "gemini":
-                # Use Gemini API
+                # Use Gemini API with grounding context (if available)
                 self.logger.info("🤖 CHECKPOINT 4b: Calling Gemini API...")
+                grounded_context = self._ground_with_gemini_rag(user_request)
                 prompt = f"""You are a Langflow expert. Generate ONLY a JSON structure for flow data.
 
 The JSON should have this structure:
@@ -195,20 +243,19 @@ Each node must have:
 - type: ALWAYS "genericNode"
 - position: {{x: number, y: number}}
 - data: {{
-    "type": "EXACT_COMPONENT_NAME",  // USE THE EXACT COMPONENT NAME FROM THE LIST BELOW
+    "type": "EXACT_COMPONENT_NAME",  // USE THE EXACT COMPONENT NAME FROM THE ALLOWED LIST BELOW
     "id": "same_as_node_id",
-    "node": {{}}  // Will be filled by backend
+    "node": {{}}
   }}
 
-CRITICAL: The "type" field in node.data MUST be the EXACT component name from the available components list below.
+ALLOWED COMPONENTS (JSON lines):
+{grounded_context or component_info}
 
+CRITICAL: Use ONLY the listed components; if insufficient, return a minimal flow with ChatInput → OpenAIModel → ChatOutput.
 Create a Langflow flow for: {user_request}
 
-{component_info}
-
-Space nodes horizontally: Input components at x=100-200, Processing at x=400-600, Output at x=800-900
+Space nodes horizontally: Input x=100-200, Processing x=400-600, Output x=800-900
 Return ONLY valid JSON, no markdown, no explanation."""
-
                 response = self.client.generate_content(
                     prompt,
                     generation_config=genai.GenerationConfig(
@@ -218,6 +265,10 @@ Return ONLY valid JSON, no markdown, no explanation."""
                 )
                 content = response.text
                 self.logger.info(f"✅ CHECKPOINT 4c: Gemini responded with {len(content)} characters")
+                # Persist raw output for debugging
+                kb_dir = (Path(__file__).resolve().parents[1] / "knowledge_base")
+                kb_dir.mkdir(parents=True, exist_ok=True)
+                (kb_dir / "last_llm_flow.json").write_text(content or "", encoding="utf-8")
             else:
                 # Use OpenAI API
                 self.logger.info("🤖 CHECKPOINT 4b: Calling OpenAI API...")
@@ -239,8 +290,17 @@ Return ONLY valid JSON, no markdown, no explanation."""
             
             flow_data = json.loads(content)
             self.logger.info(f"✅ CHECKPOINT 4e: JSON parsed successfully")
-              # Validate and clean the flow data
-            return self._validate_flow_data(flow_data)
+            # Validate and clean the flow data
+            flow_data = self._validate_flow_data(flow_data)
+            # Hydrate nodes with real component templates to avoid 'No template' issues
+            self._hydrate_flow_nodes(flow_data)
+            # Enforce model component to match provider/user intent (e.g., Gemini → GoogleGenerativeAIModel)
+            self._enforce_provider_model_choice(user_request, flow_data)
+            # Ensure essential IO nodes are present
+            self._ensure_io_nodes(flow_data)
+            # Normalize edge handles to JSON-escaped strings expected by frontend
+            self._normalize_edge_handles(flow_data)
+            return flow_data
             
         except Exception as e:
             self.logger.error(f"Error generating flow with LLM: {e}")
@@ -319,6 +379,246 @@ Return ONLY valid JSON, no markdown, no explanation."""
         flow_data["edges"] = valid_edges
         
         return flow_data
+
+    def _hydrate_flow_nodes(self, flow_data: Dict[str, Any]) -> None:
+        """Populate node.data.node with real component definitions from the catalog.
+        This fixes missing template errors in the UI and improves downstream validation.
+        """
+        if not isinstance(flow_data, dict) or not flow_data.get("nodes"):
+            return
+        # Ensure RAG has components loaded
+        try:
+            if not self.rag.components_cache:
+                self.rag._load_langflow_components()
+        except Exception as e:
+            self.logger.warning(f"Could not ensure components cache: {e}")
+
+        for node in flow_data.get("nodes", []):
+            try:
+                data = node.get("data", {})
+                comp_type = data.get("type")
+                if not comp_type:
+                    continue
+                # Resolve aliases (e.g., Amazon -> AmazonBedrockConverseModel)
+                resolved_type = self.rag.resolve_component_name(comp_type)
+                if resolved_type != comp_type:
+                    data["type"] = resolved_type
+                    self.logger.info(f"Hydrate: resolved '{comp_type}' → '{resolved_type}'")
+                comp = self.rag.get_component_by_name(resolved_type)
+                if comp and isinstance(comp.get("info"), dict):
+                    # Attach the full component definition under data.node
+                    data["node"] = comp["info"]
+                    # If display_name missing in node, use component's
+                    if "display_name" not in data and comp["info"].get("display_name"):
+                        data["display_name"] = comp["info"]["display_name"]
+                else:
+                    # Leave an empty node dict to be safe
+                    data.setdefault("node", {})
+            except Exception as e:
+                self.logger.warning(f"Hydrate failed for node {node.get('id')}: {e}")
+
+    def _enforce_provider_model_choice(self, user_request: str, flow_data: Dict[str, Any]) -> None:
+        """Adjust model nodes to reflect requested provider or current provider.
+        - If provider is gemini or user mentions 'gemini'/'google', prefer GoogleGenerativeAIModel.
+        - If user mentions 'amazon'/'bedrock', prefer AmazonBedrockConverseModel.
+        - If user mentions 'openai', prefer OpenAIModel.
+        """
+        try:
+            text = (user_request or "").lower()
+            want_openai = ("openai" in text)
+            want_gemini = (self.provider == "gemini") or ("gemini" in text or "google" in text)
+            want_bedrock = ("amazon" in text or "bedrock" in text)
+
+            model_nodes = [n for n in flow_data.get("nodes", []) if isinstance(n.get("data"), dict) and isinstance(n["data"].get("type"), str)]
+            if not model_nodes:
+                return
+
+            def _switch_node_type(node: Dict[str, Any], new_type: str) -> bool:
+                try:
+                    node["data"]["type"] = new_type
+                    comp = self.rag.get_component_by_name(new_type)
+                    if comp and isinstance(comp.get("info"), dict):
+                        node["data"]["node"] = comp["info"]
+                        if "display_name" not in node["data"] and comp["info"].get("display_name"):
+                            node["data"]["display_name"] = comp["info"]["display_name"]
+                        return True
+                except Exception as e:
+                    self.logger.warning(f"Provider enforcement failed for node {node.get('id')}: {e}")
+                return False
+
+            changed = False
+            # Highest priority: explicit OpenAI request
+            if want_openai:
+                for node in model_nodes:
+                    t = node["data"].get("type", "")
+                    if _switch_node_type(node, "OpenAIModel"):
+                        self.logger.info(f"🔁 Replaced model '{t}' → 'OpenAIModel' due to user intent")
+                        changed = True
+                        break
+            # Next: Amazon Bedrock
+            if not changed and want_bedrock:
+                for node in model_nodes:
+                    t = node["data"].get("type", "")
+                    if _switch_node_type(node, "AmazonBedrockConverseModel"):
+                        self.logger.info(f"🔁 Replaced model '{t}' → 'AmazonBedrockConverseModel' due to user intent")
+                        changed = True
+                        break
+            # Finally: Gemini based on provider or mention
+            if not changed and want_gemini:
+                for node in model_nodes:
+                    t = node["data"].get("type", "")
+                    if _switch_node_type(node, "GoogleGenerativeAIModel"):
+                        self.logger.info(f"🔁 Replaced model '{t}' → 'GoogleGenerativeAIModel' to match provider")
+                        changed = True
+                        break
+        except Exception as e:
+            self.logger.warning(f"Model provider enforcement skipped due to error: {e}")
+
+    def _ensure_io_nodes(self, flow_data: Dict[str, Any]) -> None:
+        """Ensure ChatInput and ChatOutput nodes exist; add them if missing and hydrate from catalog."""
+        try:
+            nodes = flow_data.setdefault("nodes", [])
+            # Presence checks
+            has_input = any(isinstance(n.get("data"), dict) and n["data"].get("type") == "ChatInput" for n in nodes)
+            has_output = any(isinstance(n.get("data"), dict) and n["data"].get("type") == "ChatOutput" for n in nodes)
+
+            # Helper to create hydrated node by type
+            def _make_node(node_id: str, comp_type: str, x: int, y: int) -> Dict[str, Any]:
+                comp = self.rag.get_component_by_name(comp_type)
+                info = comp.get("info") if comp else {}
+                return {
+                    "id": node_id,
+                    "type": "genericNode",
+                    "position": {"x": x, "y": y},
+                    "data": {
+                        "type": comp_type,
+                        "id": node_id,
+                        "node": info if isinstance(info, dict) else {}
+                    }
+                }
+
+            # Add ChatInput if missing
+            if not has_input:
+                new_id = "ChatInput-1"
+                nodes.insert(0, _make_node(new_id, "ChatInput", 100, 100))
+                self.logger.info("➕ Inserted missing ChatInput node")
+            # Add ChatOutput if missing
+            if not has_output:
+                new_id = "ChatOutput-1"
+                nodes.append(_make_node(new_id, "ChatOutput", 850, 100))
+                self.logger.info("➕ Inserted missing ChatOutput node")
+
+            # Basic edge wiring if edges are empty or incomplete
+            edges = flow_data.setdefault("edges", [])
+            if not edges and len(nodes) >= 2:
+                # Connect first → middle → last in sequence
+                ordered_ids = [n.get("id") for n in nodes]
+                for a, b in zip(ordered_ids, ordered_ids[1:]):
+                    if a and b:
+                        edges.append({
+                            "id": f"reactflow__edge-{a}-{b}",
+                            "source": a,
+                            "target": b
+                        })
+                self.logger.info(f"🔗 Auto-wired {len(edges)} edges between sequential nodes")
+        except Exception as e:
+            self.logger.warning(f"IO node ensuring skipped due to error: {e}")
+
+    def _normalize_edge_handles(self, flow_data: Dict[str, Any]) -> None:
+        """Ensure edge.sourceHandle and edge.targetHandle are valid JSON strings.
+        If a handle is missing or is a plain label (e.g., 'data_inputs'), construct
+        proper handle objects from node templates and stringify them.
+        """
+        try:
+            nodes = {n.get("id"): n for n in flow_data.get("nodes", [])}
+            edges = flow_data.get("edges", [])
+
+            def _is_json_like(s: Optional[str]) -> bool:
+                return isinstance(s, str) and s.strip().startswith("{") and s.strip().endswith("}")
+
+            for edge in edges:
+                src_id = edge.get("source")
+                tgt_id = edge.get("target")
+                src = nodes.get(src_id)
+                tgt = nodes.get(tgt_id)
+                # Build targetHandle if missing or not JSON
+                if tgt and not _is_json_like(edge.get("targetHandle")):
+                    tgt_data = tgt.get("data", {})
+                    tgt_node = tgt_data.get("node", {})
+                    tmpl = tgt_node.get("template", {}) if isinstance(tgt_node, dict) else {}
+                    # Try to guess field
+                    field = None
+                    if isinstance(edge.get("targetHandle"), str) and edge["targetHandle"]:
+                        field = edge["targetHandle"]
+                    # Prefer a field that accepts Message if absent
+                    if not field and isinstance(tmpl, dict):
+                        # Prefer required Message inputs, else first input
+                        candidates = [k for k, v in tmpl.items() if isinstance(v, dict) and isinstance(v.get("input_types"), list)]
+                        # order by whether it accepts Message
+                        candidates.sort(key=lambda k: ("Message" not in (tmpl[k].get("input_types") or []), not tmpl[k].get("required", False)))
+                        field = candidates[0] if candidates else None
+                    if field and field in tmpl:
+                        tv = tmpl[field]
+                        input_types = tv.get("input_types") or []
+                        handle_obj = {
+                            "type": (input_types[0] if input_types else tv.get("type")),
+                            "fieldName": field,
+                            "id": tgt_data.get("id") or tgt.get("id"),
+                            "inputTypes": input_types,
+                        }
+                        # JSON stringify (quotes are fine; frontend escapes internally)
+                        edge["targetHandle"] = json.dumps(handle_obj, ensure_ascii=False)
+                        self.logger.info(f"Normalized targetHandle for edge {edge.get('id')} → field '{field}'")
+                # Build sourceHandle if missing or not JSON
+                if src and not _is_json_like(edge.get("sourceHandle")):
+                    src_data = src.get("data", {})
+                    src_node = src_data.get("node", {})
+                    outputs = src_node.get("outputs") or []
+                    out = outputs[0] if outputs else None
+                    if isinstance(out, dict):
+                        handle_obj = {
+                            "id": src_data.get("id") or src.get("id"),
+                            "dataType": src_data.get("type"),
+                            "name": out.get("name", "text_output"),
+                            "output_types": out.get("types", []),
+                        }
+                        edge["sourceHandle"] = json.dumps(handle_obj, ensure_ascii=False)
+                        self.logger.info(f"Normalized sourceHandle for edge {edge.get('id')} → output '{handle_obj['name']}'")
+        except Exception as e:
+            self.logger.warning(f"Edge handle normalization skipped due to error: {e}")
+
+    def _ground_with_gemini_rag(self, user_request: str) -> str:
+        """Build a compact grounding context using provider-focused components.
+        Returns JSON-lines text of allowed components.
+        """
+        if not self.grounded_rag:
+            return ""
+        try:
+            self.grounded_rag.load_catalog()
+            self.grounded_rag.build_index()
+            matches = self.grounded_rag.retrieve(user_request, top_k=12, threshold=0.2)
+            items = [m[0] for m in matches]
+            context_lines = []
+            for d in items:
+                context_lines.append(json.dumps({
+                    "category": d.get("category"),
+                    "name": d.get("name"),
+                    "display_name": d.get("display_name"),
+                    "description": d.get("description"),
+                    "base_classes": d.get("base_classes", []),
+                    "inputs": d.get("inputs", [])
+                }, ensure_ascii=False))
+            grounded = "\n".join(context_lines)
+            # Persist for debugging
+            kb_dir = (Path(__file__).resolve().parents[1] / "knowledge_base")
+            kb_dir.mkdir(parents=True, exist_ok=True)
+            (kb_dir / "grounded_context.jsonl").write_text(grounded, encoding="utf-8")
+            self.logger.info("📝 Saved grounded context to knowledge_base/grounded_context.jsonl")
+            return grounded
+        except Exception as e:
+            self.logger.warning(f"Grounding step failed: {e}")
+            return ""
+    
     def _generate_flow_name(self, user_request: str) -> str:
         """Generate a name for the flow based on the user request."""
         # Extract key words and create a title
@@ -344,88 +644,79 @@ Return ONLY valid JSON, no markdown, no explanation."""
     
     def _create_basic_fallback_flow_data(self, user_request: str) -> Dict[str, Any]:
         """Create basic flow data for fallback scenarios."""
-        # Import requests to fetch component templates
+        # Prefer local catalog via RAG to get real templates
         try:
-            import requests
-            # Try to fetch real component templates from Langflow backend
-            response = requests.get("http://127.0.0.1:7860/api/v1/all", timeout=5)
-            if response.status_code == 200:
-                components_data = response.json()
-                self.logger.info("✅ Successfully fetched component templates from Langflow")
-                
-                # Extract templates for our needed components
-                chat_input_template = None
-                openai_template = None
-                chat_output_template = None
-                
-                # Search for components in the response
-                for category, components in components_data.items():
-                    if isinstance(components, dict):
-                        for comp_name, comp_data in components.items():
-                            if comp_name == "ChatInput":
-                                chat_input_template = comp_data
-                            elif comp_name in ["OpenAIModel", "OpenAI"]:
-                                openai_template = comp_data
-                            elif comp_name == "ChatOutput":
-                                chat_output_template = comp_data
-                
-                # If we have the templates, use them
-                if chat_input_template and openai_template and chat_output_template:
-                    self.logger.info("📦 Using real component templates for fallback flow")
-                    return {
-                        "nodes": [
-                            {
+            if not self.rag.components_cache:
+                self.rag._load_langflow_components()
+            cache = self.rag.components_cache or {}
+            chat_input = None
+            openai_comp = None
+            chat_output = None
+            for category, comps in cache.items():
+                if not isinstance(comps, dict):
+                    continue
+                chat_input = chat_input or comps.get("ChatInput")
+                chat_output = chat_output or comps.get("ChatOutput")
+                # Prefer OpenAIModel key name
+                if "OpenAIModel" in comps:
+                    openai_comp = comps.get("OpenAIModel")
+                elif "OpenAI" in comps:
+                    openai_comp = openai_comp or comps.get("OpenAI")
+            if chat_input and openai_comp and chat_output:
+                self.logger.info("📦 Using local catalog templates for fallback flow")
+                return {
+                    "nodes": [
+                        {
+                            "id": "ChatInput-1",
+                            "type": "genericNode",
+                            "position": {"x": 100, "y": 100},
+                            "data": {
+                                "type": "ChatInput",
                                 "id": "ChatInput-1",
-                                "type": "genericNode",
-                                "position": {"x": 100, "y": 100},
-                                "data": {
-                                    "type": "ChatInput",
-                                    "id": "ChatInput-1",
-                                    "node": chat_input_template
-                                }
-                            },
-                            {
-                                "id": "OpenAI-1", 
-                                "type": "genericNode",
-                                "position": {"x": 400, "y": 100},
-                                "data": {
-                                    "type": "OpenAIModel" if "OpenAIModel" in str(openai_template.get("display_name", "")) else "OpenAI",
-                                    "id": "OpenAI-1",
-                                    "node": openai_template
-                                }
-                            },
-                            {
+                                "node": chat_input
+                            }
+                        },
+                        {
+                            "id": "OpenAI-1",
+                            "type": "genericNode",
+                            "position": {"x": 400, "y": 100},
+                            "data": {
+                                "type": "OpenAIModel" if isinstance(openai_comp, dict) and openai_comp.get("display_name","OpenAI").startswith("OpenAI") else "OpenAI",
+                                "id": "OpenAI-1",
+                                "node": openai_comp
+                            }
+                        },
+                        {
+                            "id": "ChatOutput-1",
+                            "type": "genericNode",
+                            "position": {"x": 700, "y": 100},
+                            "data": {
+                                "type": "ChatOutput",
                                 "id": "ChatOutput-1",
-                                "type": "genericNode", 
-                                "position": {"x": 700, "y": 100},
-                                "data": {
-                                    "type": "ChatOutput",
-                                    "id": "ChatOutput-1",
-                                    "node": chat_output_template
-                                }
+                                "node": chat_output
                             }
-                        ],
-                        "edges": [
-                            {
-                                "id": "reactflow__edge-ChatInput-1-OpenAI-1",
-                                "source": "ChatInput-1",
-                                "target": "OpenAI-1",
-                                "sourceHandle": '{"id":"ChatInput-1","dataType":"Message","name":"message","output_types":["Message"]}',
-                                "targetHandle": '{"type":"Message","fieldName":"input_value","id":"OpenAI-1","inputTypes":["Message"]}'
-                            },
-                            {
-                                "id": "reactflow__edge-OpenAI-1-ChatOutput-1", 
-                                "source": "OpenAI-1",
-                                "target": "ChatOutput-1",
-                                "sourceHandle": '{"id":"OpenAI-1","dataType":"Message","name":"text_output","output_types":["Message"]}',
-                                "targetHandle": '{"type":"Message","fieldName":"input_value","id":"ChatOutput-1","inputTypes":["Message"]}'
-                            }
-                        ],
-                        "viewport": {"x": 0, "y": 0, "zoom": 1}
-                    }
+                        }
+                    ],
+                    "edges": [
+                        {
+                            "id": "reactflow__edge-ChatInput-1-OpenAI-1",
+                            "source": "ChatInput-1",
+                            "target": "OpenAI-1",
+                            "sourceHandle": '{"id":"ChatInput-1","dataType":"Message","name":"message","output_types":["Message"]}',
+                            "targetHandle": '{"type":"Message","fieldName":"input_value","id":"OpenAI-1","inputTypes":["Message"]}'
+                        },
+                        {
+                            "id": "reactflow__edge-OpenAI-1-ChatOutput-1",
+                            "source": "OpenAI-1",
+                            "target": "ChatOutput-1",
+                            "sourceHandle": '{"id":"OpenAI-1","dataType":"Message","name":"text_output","output_types":["Message"]}',
+                            "targetHandle": '{"type":"Message","fieldName":"input_value","id":"ChatOutput-1","inputTypes":["Message"]}'
+                        }
+                    ],
+                    "viewport": {"x": 0, "y": 0, "zoom": 1}
+                }
         except Exception as e:
-            self.logger.warning(f"⚠️ Could not fetch component templates: {e}")
-        
+            self.logger.warning(f"⚠️ Could not build fallback from local catalog: {e}")
         # Fallback to minimal structure with basic templates
         self.logger.info("📦 Using minimal fallback flow structure")
         return {
@@ -620,8 +911,8 @@ if __name__ == "__main__":
             print(f"Suggestions: {validation['suggestions']}")
         
         # Save flow JSON
-        with open("simple_generated_flow.json", "w") as f:
-            json.dump(flow, f, indent=2)
+        with open("simple_generated_flow.json", "w", encoding="utf-8") as f:
+            json.dump(flow, f, indent=2, ensure_ascii=False)
         
         print("\nFlow saved to simple_generated_flow.json")
         

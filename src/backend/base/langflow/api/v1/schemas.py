@@ -35,6 +35,8 @@ class FlowBuildRequest(BaseModel):
     user_context: dict[str, Any] | None = Field(default=None, description="Additional context about the user")
     flow_name: str | None = Field(default=None, description="Optional name for the generated flow")
     complexity: str | None = Field(default="medium", description="Desired complexity level: simple, medium, advanced")
+    # When true, persist the generated flow to the database so it appears in the sidebar list
+    persist: bool | None = Field(default=False, description="If true, save the generated flow. Defaults to false.")
 
 
 class FlowBuildResponse(BaseModel):
@@ -510,6 +512,8 @@ class FlowBuildRequest(BaseModel):
     user_context: dict[str, Any] | None = Field(default=None, description="Additional context about the user")
     flow_name: str | None = Field(default=None, description="Optional name for the generated flow")
     complexity: str | None = Field(default="medium", description="Desired complexity level: simple, medium, advanced")
+    # When true, persist the generated flow to the database so it appears in the sidebar list
+    persist: bool | None = Field(default=False, description="If true, save the generated flow. Defaults to false.")
 
 
 class FlowBuildResponse(BaseModel):
