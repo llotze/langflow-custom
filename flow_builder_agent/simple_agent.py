@@ -300,6 +300,16 @@ Return ONLY valid JSON, no markdown, no explanation."""
             self._ensure_io_nodes(flow_data)
             # Normalize edge handles to JSON-escaped strings expected by frontend
             self._normalize_edge_handles(flow_data)
+            # Mirror parsed handles into edge.data for safety with older helpers
+            try:
+                for e in flow_data.get("edges", []):
+                    if isinstance(e.get("sourceHandle"), str) and isinstance(e.get("targetHandle"), str):
+                        e.setdefault("data", {})
+                        # Keep the raw strings; frontend utilities will re-escape as needed
+                        e["data"]["sourceHandle"] = e["sourceHandle"]
+                        e["data"]["targetHandle"] = e["targetHandle"]
+            except Exception:
+                pass
             return flow_data
             
         except Exception as e:

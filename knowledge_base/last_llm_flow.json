@@ -1,85 +1,59 @@
 {
   "nodes": [
     {
-      "id": "node_1",
+      "id": "chat_input_1",
       "type": "genericNode",
       "position": {
-        "x": 100,
+        "x": 150,
         "y": 100
       },
       "data": {
         "type": "ChatInput",
-        "id": "node_1",
+        "id": "chat_input_1",
         "node": {}
       }
     },
     {
-      "id": "node_2",
+      "id": "openai_model_1",
       "type": "genericNode",
       "position": {
-        "x": 400,
+        "x": 500,
         "y": 100
       },
       "data": {
         "type": "OpenAIModel",
-        "id": "node_2",
-        "node": {
-          "api_key": {
-            "value": "YOUR_OPENAI_API_KEY",
-            "password": true
-          },
-          "model_name": {
-            "value": "gpt-3.5-turbo",
-            "type": "str"
-          },
-          "input_value": {
-            "value": "{{chat_input_node_1.data}}",
-            "type": "str"
-          },
-          "temperature": {
-            "value": 0.7,
-            "type": "float"
-          },
-          "system_message": {
-            "value": "You are a helpful assistant.",
-            "type": "str"
-          }
-        }
+        "id": "openai_model_1",
+        "node": {}
       }
     },
     {
-      "id": "node_3",
+      "id": "chat_output_1",
       "type": "genericNode",
       "position": {
-        "x": 800,
+        "x": 850,
         "y": 100
       },
       "data": {
         "type": "ChatOutput",
-        "id": "node_3",
-        "node": {
-          "input_value": {
-            "value": "{{openai_model_node_2.data}}",
-            "type": "str"
-          }
-        }
+        "id": "chat_output_1",
+        "node": {}
       }
     }
   ],
   "edges": [
     {
-      "source": "node_1",
-      "sourceHandle": "data",
-      "target": "node_2",
-      "targetHandle": "input_value",
-      "id": "edge-node_1-data-node_2-input_value"
+      "source": "chat_input_1",
+      "sourceHandle": "ChatInput-output",
+      "target": "openai_model_1",
+      "targetHandle": "OpenAIModel-input_value",
+      "id": "edge-chat_input_1-openai_model_1-ChatInput-output-OpenAIModel-input_value"
     },
     {
-      "source": "node_2",
-      "sourceHandle": "data",
-      "target": "node_3",
-      "targetHandle": "input_value",
-      "id": "edge-node_2-data-node_3-input_value"
+      "source": "openai_model_1",
+      "sourceHandle": "OpenAIModel-output",
+      "target": "chat_output_1",
+      "targetHandle": "ChatOutput-input_value",
+      "id": "edge-openai_model_1-chat_output_1-OpenAIModel-output-ChatOutput-input_value"
     }
   ],
   "viewport": {

@@ -1070,8 +1070,14 @@ export function scapedJSONStringfy(json: object): string {
   return customStringify(json).replace(/"/g, "œ");
 }
 export function scapeJSONParse(json: string): any {
-  const parsed = json.replace(/œ/g, '"');
-  return JSON.parse(parsed);
+  try {
+    const parsed = json.replace(/œ/g, '"');
+    return JSON.parse(parsed);
+  } catch (_e) {
+    // Fallback for legacy/non-JSON handles; avoid crashing the UI
+    // Return a minimal object so callers that access .name or .fieldName don't blow up
+    return { name: json, fieldName: json };
+  }
 }
 
 // this function receives an array of edges and return true if any of the handles are not a json string
