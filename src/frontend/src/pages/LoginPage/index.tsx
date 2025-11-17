@@ -1,6 +1,6 @@
 import * as Form from "@radix-ui/react-form";
 import { useContext, useState } from "react";
-import LangflowLogo from "@/assets/LangflowLogo.svg?react";
+import GracefulGLogo from "@/assets/graceful/graceful-robot-G-logo.png";
 import { useLoginUser } from "@/controllers/API/queries/auth";
 import { CustomLink } from "@/customization/components/custom-link";
 import { useSanitizeRedirectUrl } from "@/hooks/use-sanitize-redirect-url";
@@ -70,13 +70,18 @@ export default function LoginPage(): JSX.Element {
     >
       <div className="flex h-full w-full flex-col items-center justify-center bg-muted">
         <div className="flex w-72 flex-col items-center justify-center gap-2">
-          <LangflowLogo
-            title="Langflow logo"
-            className="mb-4 h-10 w-10 scale-[1.5]"
-          />
-          <span className="mb-6 text-2xl font-semibold text-primary">
-            Sign in to Langflow
-          </span>
+          <div className="mb-4 flex items-center justify-center">
+            <img 
+              src={GracefulGLogo} 
+              alt="Graceful AI Logo" 
+              className="h-44 w-auto"
+            />
+          </div>
+          <div className="mb-6 text-center">
+            <div className="text-2xl font-semibold text-primary">
+              Sign in to Graceful AI
+            </div>
+          </div>
           <div className="mb-3 w-full">
             <Form.Field name="username">
               <Form.Label className="data-[invalid]:label-invalid">
