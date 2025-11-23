@@ -18,6 +18,8 @@ import {
   FlowSidebarComponent,
 } from "./components/flowSidebarComponent";
 import Page from "./components/PageComponent";
+import { BotIcon } from "./components/GracefulAgent/BotIcon";
+import { ChatPanel } from "./components/GracefulAgent/ChatPanel";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const types = useTypesStore((state) => state.types);
@@ -31,6 +33,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const currentSavedFlow = useFlowsManagerStore((state) => state.currentFlow);
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const changesNotSaved =
     customStringify(currentFlow) !== customStringify(currentSavedFlow) &&
@@ -181,6 +184,9 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
           </div>
         )}
       </div>
+
+      <BotIcon onBotClick={() => setIsChatOpen(true)} isChatOpen={isChatOpen} />
+      <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       {blocker.state === "blocked" && (
         <>
           {!isBuilding && currentSavedFlow && (
