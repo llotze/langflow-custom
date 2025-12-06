@@ -2,7 +2,7 @@ import { Background, ReactFlow, useReactFlow, Panel } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { MousePointer, ZoomIn, ZoomOut, Maximize, StickyNote, X, FileText } from "lucide-react";
+import { MousePointer, ZoomIn, ZoomOut, Maximize, X } from "lucide-react";
 import GenericNode from "@/CustomNodes/GenericNode";
 import NoteNode from "@/CustomNodes/NoteNode";
 import { PreviewEdge } from "./PreviewEdge";
