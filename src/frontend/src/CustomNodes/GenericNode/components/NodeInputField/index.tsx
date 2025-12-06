@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import {useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useHandleNodeClass from "@/CustomNodes/hooks/use-handle-node-class";
 import type { NodeInfoType } from "@/components/core/parameterRenderComponent/types";
@@ -17,7 +17,6 @@ import {
   DEFAULT_TOOLSET_PLACEHOLDER,
   FLEX_VIEW_TYPES,
   ICON_STROKE_WIDTH,
-  IS_AUTO_LOGIN,
   LANGFLOW_SUPPORTED_TYPES,
 } from "../../../../constants/constants";
 import useFlowStore from "../../../../stores/flowStore";
@@ -93,12 +92,6 @@ export default function NodeInputField({
     name,
     postTemplateValue,
   );
-
-  useEffect(() => {
-    if (optionalHandle && optionalHandle.length === 0) {
-      optionalHandle = null;
-    }
-  }, [optionalHandle]);
 
   const displayHandle =
     (!LANGFLOW_SUPPORTED_TYPES.has(type ?? "") ||
