@@ -90,13 +90,17 @@ export default function SignUp(): JSX.Element {
     >
       <div className="flex h-full w-full flex-col items-center justify-center bg-muted">
         <div className="flex w-72 flex-col items-center justify-center gap-2">
-          <div className="mb-4 flex items-center justify-center">
+          <button
+            onClick={() => navigate("/")}
+            className="mb-4 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity bg-transparent border-none p-0"
+            type="button"
+          >
             <img 
               src={GracefulGLogo} 
               alt="Graceful AI Logo" 
               className="h-44 w-auto"
             />
-          </div>
+          </button>
           <div className="mb-6 text-center">
             <div className="text-2xl font-semibold text-primary">
               Sign up for Graceful AI
