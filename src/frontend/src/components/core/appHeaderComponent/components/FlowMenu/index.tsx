@@ -1,6 +1,7 @@
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
+import { motion } from "framer-motion";
 import IconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import FlowSettingsComponent from "@/components/core/flowSettingsComponent";
@@ -28,6 +29,7 @@ export const MenuBar = memo((): JSX.Element => {
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const saveLoading = useFlowsManagerStore((state) => state.saveLoading);
   const [openSettings, setOpenSettings] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const navigate = useCustomNavigate();
   const isBuilding = useFlowStore((state) => state.isBuilding);
   const saveFlow = useSaveFlow();
@@ -55,7 +57,6 @@ export const MenuBar = memo((): JSX.Element => {
     })),
   );
   const onFlowPage = useFlowStore((state) => state.onFlowPage);
-  const measureRef = useRef<HTMLSpanElement>(null);
   const changesNotSaved = useUnsavedChanges();
 
   const { data: folders, isFetched: isFoldersFetched } = useGetFoldersQuery();
@@ -102,18 +103,38 @@ export const MenuBar = memo((): JSX.Element => {
           >
             {currentFolder?.name && (
               <div className="hidden truncate md:flex">
-                <div
-                  className="cursor-pointer truncate text-sm text-muted-foreground hover:text-primary"
-                  onClick={() => {
-                    navigate(
-                      currentFolder?.id
-                        ? "/all/folder/" + currentFolder.id
-                        : "/all",
-                    );
-                  }}
+                <ShadTooltip
+                  content="Save & Return to Project"
+                  side="bottom"
+                  styleClasses="z-10"
                 >
-                  {currentFolder?.name}
-                </div>
+                  <div
+                    className="cursor-pointer flex items-center gap-1 truncate text-sm text-muted-foreground hover:text-primary"
+                    onClick={() => {
+                      navigate(
+                        currentFolder?.id
+                          ? "/all/folder/" + currentFolder.id
+                          : "/all",
+                      );
+                    }}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                  >
+                    <motion.div
+                      className="flex items-center -translate-y-1.5"
+                      animate={{ x: isHovered ? -2 : 0 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    >
+                      <IconComponent
+                        name="ArrowLeft"
+                        className="h-4 w-4"
+                      />
+                    </motion.div>
+                    <span className="truncate">
+                      {currentFolder?.name}
+                    </span>
+                  </div>
+                </ShadTooltip>
               </div>
             )}
           </div>
@@ -135,7 +156,6 @@ export const MenuBar = memo((): JSX.Element => {
               data-testid="menu_bar_display"
             >
               <span
-                ref={measureRef}
                 className="w-fit max-w-[35vw] truncate whitespace-pre text-mmd font-semibold sm:max-w-full sm:text-sm"
                 aria-hidden="true"
                 data-testid="flow_name"

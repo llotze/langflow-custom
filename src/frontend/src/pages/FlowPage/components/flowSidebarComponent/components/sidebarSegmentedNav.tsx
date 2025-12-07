@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -46,46 +44,22 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Bundles",
     tooltip: "Bundles",
   },
-  {
-    id: "add_note",
-    icon: "sticky-note",
-    label: "Sticky Notes",
-    tooltip: "Add Sticky Notes",
-  },
 ];
 
 const SidebarSegmentedNav = () => {
   const { activeSection, setActiveSection, toggleSidebar, open } = useSidebar();
   const { focusSearch, setSearch } = useSearchContext();
-  const [isAddNoteActive, setIsAddNoteActive] = useState(false);
-  const handleAddNote = () => {
-    window.dispatchEvent(new Event("lf:start-add-note"));
-    setIsAddNoteActive(true);
-  };
-
-  useEffect(() => {
-    const onEnd = () => setIsAddNoteActive(false);
-    window.addEventListener("lf:end-add-note", onEnd);
-    return () => window.removeEventListener("lf:end-add-note", onEnd);
-  }, []);
 
   return (
     <div className="flex h-full flex-col border-r border-border bg-background">
       <SidebarMenu className="gap-2 py-1">
         {NAV_ITEMS.map((item) => (
           <div key={item.id}>
-            {item.id === "add_note" && <Separator className="w-full" />}
             <SidebarMenuItem className="px-1">
               <ShadTooltip content={item.tooltip} side="right">
                 <SidebarMenuButton
                   size="md"
                   onClick={(e) => {
-                    if (item.id === "add_note") {
-                      e.stopPropagation();
-                      handleAddNote();
-                      return;
-                    }
-
                     setSearch?.("");
                     if (activeSection === item.id && open) {
                       toggleSidebar();
@@ -99,18 +73,10 @@ const SidebarSegmentedNav = () => {
                       }
                     }
                   }}
-                  isActive={
-                    item.id === "add_note"
-                      ? isAddNoteActive
-                      : activeSection === item.id
-                  }
+                  isActive={activeSection === item.id}
                   className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-md p-0 transition-all duration-200",
-                    (
-                      item.id === "add_note"
-                        ? isAddNoteActive
-                        : activeSection === item.id
-                    )
+                    activeSection === item.id
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}

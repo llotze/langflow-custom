@@ -19,6 +19,8 @@ class UserOptin(BaseModel):
     github_starred: bool = Field(default=False)
     dialog_dismissed: bool = Field(default=False)
     discord_clicked: bool = Field(default=False)
+    onboarding_completed: bool = Field(default=False)
+    onboarding_preferences: dict[str, Any] | None = Field(default=None)
     # Add more opt-in actions as needed
 
 
@@ -55,7 +57,13 @@ class UserCreate(SQLModel):
     username: str = Field()
     password: str = Field()
     optins: dict[str, Any] | None = Field(
-        default={"github_starred": False, "dialog_dismissed": False, "discord_clicked": False}
+        default={
+            "github_starred": False, 
+            "dialog_dismissed": False, 
+            "discord_clicked": False,
+            "onboarding_completed": False,
+            "onboarding_preferences": None
+        }
     )
 
 

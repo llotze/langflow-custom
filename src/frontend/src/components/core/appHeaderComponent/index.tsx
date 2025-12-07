@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import AlertDropdown from "@/alerts/alertDropDown";
 import DataStaxLogo from "@/assets/DataStaxLogo.svg?react";
 import LangflowLogo from "@/assets/LangflowLogo.svg?react";
+import GracefulGLogo from "@/assets/graceful/graceful-full-logo.png";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { Button } from "@/components/ui/button";
@@ -62,13 +63,17 @@ export default function AppHeader(): JSX.Element {
         <Button
           unstyled
           onClick={() => navigate("/")}
-          className="mr-1 flex h-8 w-8 items-center"
+          className="mr-1 flex items-center gap-2"
           data-testid="icon-ChevronLeft"
         >
           {ENABLE_DATASTAX_LANGFLOW ? (
             <DataStaxLogo className="fill-black dark:fill-[white]" />
           ) : (
-            <LangflowLogo className="h-5 w-5" />
+            <img 
+              src={GracefulGLogo} 
+              alt="Graceful AI" 
+              className="h-8 w-auto"
+            />
           )}
         </Button>
         {ENABLE_DATASTAX_LANGFLOW && (

@@ -1,5 +1,6 @@
 // Modals.tsx
-import TemplatesModal from "@/modals/templatesModal";
+// import TemplatesModal from "@/modals/templatesModal"; // Commented out - replaced with AI Assistant
+import AIFlowAssistantModal from "@/modals/aiFlowAssistantModal";
 import DeleteConfirmationModal from "../../../../modals/deleteConfirmationModal";
 
 interface ModalsProps {
@@ -18,7 +19,9 @@ const ModalsComponent = ({
   handleDeleteFolder = () => {},
 }: ModalsProps) => (
   <>
-    {openModal && <TemplatesModal open={openModal} setOpen={setOpenModal} />}
+    {/* Replaced TemplatesModal with AI Flow Assistant */}
+    {openModal && <AIFlowAssistantModal open={openModal} setOpen={setOpenModal} />}
+    {/* {openModal && <TemplatesModal open={openModal} setOpen={setOpenModal} />} */}
     {openDeleteFolderModal && (
       <DeleteConfirmationModal
         open={openDeleteFolderModal}

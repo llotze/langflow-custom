@@ -1,5 +1,6 @@
 import { FaDiscord, FaGithub } from "react-icons/fa";
 import { BotMessageSquare } from "lucide-react";
+
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { DISCORD_URL, GITHUB_URL } from "@/constants/constants";
 import { useDarkStore } from "@/stores/darkStore";
@@ -16,6 +17,7 @@ export const LangflowCounts = () => {
     <>
       <FlowBuilderChat isOpen={isOpen} onClose={closeChat} />
     <div className="flex items-center gap-3">
+
       
       <ShadTooltip
         content="Use AI to Build Flows - Describe your workflow and get instant Langflow"
