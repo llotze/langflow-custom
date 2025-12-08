@@ -38,7 +38,7 @@ function PreviewControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   
   return (
-    <Panel position="bottom-left" className="bg-white rounded-lg border border-gray-200 shadow-sm p-1 flex flex-col gap-1 mb-2 ml-2">
+    <Panel position="top-left" className="bg-white rounded-lg border border-gray-200 shadow-sm p-1 flex flex-col gap-1 mb-2 ml-2">
       <button 
         onClick={() => zoomIn()} 
         className="p-1.5 hover:bg-gray-50 rounded-md text-gray-600 hover:text-gray-900 transition-colors" 
