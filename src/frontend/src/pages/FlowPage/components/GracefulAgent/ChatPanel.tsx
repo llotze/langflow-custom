@@ -9,7 +9,7 @@ Send,
 } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { useState } from "react";
 
 interface ChatPanelProps {
@@ -44,7 +44,7 @@ return (
     isOpen
         ? {
             width: 320,
-            height: "calc(100vh - 200px)",
+            height: "calc(100vh - 140px)",
             opacity: 1,
             borderRadius: 12,
             top: 120,

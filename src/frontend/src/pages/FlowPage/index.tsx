@@ -185,7 +185,11 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
         )}
       </div>
 
-      <BotIcon onBotClick={() => setIsChatOpen(true)} isChatOpen={isChatOpen} />
+      <BotIcon 
+        onBotClick={() => setIsChatOpen(true)} 
+        isChatOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
       <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       {blocker.state === "blocked" && (
         <>

@@ -34,8 +34,8 @@ export const MemoizedFlowZoomControls = memo(() => {
 
   return (
     <Panel
-      position="bottom-left"
-      className="bg-white rounded-lg border border-gray-200 shadow-sm p-1 flex flex-col gap-1 mb-2 ml-2"
+      position="top-left"
+      className="bg-white rounded-lg border border-gray-200 shadow-sm p-1 flex flex-col gap-1 !m-2"
     >
       <ShadTooltip content="Zoom In" side="right">
         <button 

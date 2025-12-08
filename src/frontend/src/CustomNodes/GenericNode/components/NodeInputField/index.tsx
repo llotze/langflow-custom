@@ -83,7 +83,7 @@ export default function NodeInputField({
       isAuth: shouldDisplayApiKey!,
       variableName: name,
     };
-  }, [data?.node?.id, shouldDisplayApiKey, name]);
+  }, [currentFlowId, currentFlowName, data?.type, shouldDisplayApiKey, name]);
 
   useFetchDataOnMount(
     data.node!,

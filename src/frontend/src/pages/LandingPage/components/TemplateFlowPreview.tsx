@@ -97,7 +97,9 @@ export default function TemplateFlowPreview({ template }: TemplateFlowPreviewPro
     // Ensure all nodes have the correct type field for ReactFlow
     return templateNodes
       .map(node => {
-        const type = node.type || node.data?.type;
+        const nodeType = node.type as string | undefined;
+        const dataType = node.data && 'type' in node.data ? (node.data as { type?: string }).type : undefined;
+        const type = nodeType || dataType;
         // Keep noteNodes as is, convert others to genericNode
         if (type === "NoteNode" || type === "noteNode") {
           return {

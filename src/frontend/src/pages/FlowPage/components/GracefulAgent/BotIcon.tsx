@@ -1,55 +1,43 @@
-import { Bot } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
+import gracefulRobotHead from '@/assets/graceful/graceful-robot-head.png';
 
 interface BotIconProps {
 onBotClick: () => void;
 isChatOpen?: boolean;
+onClose?: () => void;
 }
 
-export function BotIcon({ onBotClick, isChatOpen = false }: BotIconProps) {
-return (
-<div className="absolute top-32 right-9 z-20">
-    {/* Bot Icon - spins like a coin every 20 seconds */}
-    <motion.div
-    layout
-    initial={false}
-    animate={
-        isChatOpen
-        ? {
-            width: 0,
-            height: 0,
-            opacity: 0,
-            scale: 0,
-            }
-        : {
-            width: 80,
-            height: 80,
-            opacity: 1,
-            scale: 1,
-            }
+export function BotIcon({ onBotClick, isChatOpen = false, onClose }: BotIconProps) {
+const handleClick = () => {
+    if (isChatOpen && onClose) {
+        onClose();
+    } else {
+        onBotClick();
     }
-    transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-    className="relative overflow-hidden"
-    style={{ transformOrigin: 'center' }}
+};
+
+return (
+<div className="absolute top-[54px] right-[235px] z-20 flex items-center">
+    {/* Bot Icon - spins like a coin every 20 seconds */}
+    <motion.button
+    onClick={handleClick}
+    className="w-12 h-12 bg-transparent p-0 border-0 cursor-pointer"
+    animate={{
+        rotateY: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 360, 0],
+    }}
+    transition={{
+        duration: 20,
+        repeat: Infinity,
+        ease: "linear",
+        times: [0, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1],
+    }}
     >
-    {!isChatOpen && (
-        <motion.button
-        onClick={onBotClick}
-        className="w-9 h-9 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center shadow-lg border border-gray-200"
-        animate={{
-            rotateY: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 360, 0],
-        }}
-        transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear",
-            times: [0, 0.85, 0.86, 0.87, 0.88, 0.89, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1],
-        }}
-        >
-        <Bot className="w-6 h-6" />
-        </motion.button>
-    )}
-    </motion.div>
+    <img 
+        src={gracefulRobotHead} 
+        alt="Graceful Robot" 
+        className="w-full h-full object-contain"
+    />
+    </motion.button>
 </div>
 );
 }
