@@ -150,8 +150,9 @@ export function ChatPanel({
     const container = scrollContainerRef.current;
     const target = messageRefs.current[pendingScrollId];
     if (container && target) {
-      const top = target.offsetTop - container.offsetTop;
-      container.scrollTo({ top, behavior: "smooth" });
+      const offset = 12; // small gap from the header
+      const top = target.offsetTop - container.offsetTop - offset;
+      container.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
     }
     setPendingScrollId(null);
   }, [pendingScrollId]);
