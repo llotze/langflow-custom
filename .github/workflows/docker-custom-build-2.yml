@@ -41,4 +41,4 @@ jobs:
         run: |
           echo "✅ Image pushed successfully!"
           echo "Image: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}"
-          echo "🚂 Railway will/should auto-deploy this image within a few minutes!"
+          echo "Railway will/should auto-deploy this image within a few minutes!"
