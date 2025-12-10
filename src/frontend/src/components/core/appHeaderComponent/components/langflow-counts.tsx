@@ -1,15 +1,22 @@
 import { FaDiscord, FaGithub } from "react-icons/fa";
+
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { DISCORD_URL, GITHUB_URL } from "@/constants/constants";
 import { useDarkStore } from "@/stores/darkStore";
 import { formatNumber } from "@/utils/utils";
+import FlowBuilderChat from "@/components/flowBuilderChatComponent";
+import useFlowBuilderChat from "@/hooks/flows/use-flow-builder-chat";
 
 export const LangflowCounts = () => {
   const stars: number | undefined = useDarkStore((state) => state.stars);
   const discordCount: number = useDarkStore((state) => state.discordCount);
+  const { isOpen, openChat, closeChat } = useFlowBuilderChat();
 
   return (
+    <>
+      <FlowBuilderChat isOpen={isOpen} onClose={closeChat} />
     <div className="flex items-center gap-3">
+
       <ShadTooltip
         content="Go to GitHub repo"
         side="bottom"
@@ -40,6 +47,7 @@ export const LangflowCounts = () => {
         </div>
       </ShadTooltip>
     </div>
+    </>
   );
 };
 

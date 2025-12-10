@@ -74,9 +74,9 @@ import {
 } from "./helpers/helper-lines";
 import {
   MemoizedBackground,
-  MemoizedCanvasControls,
   MemoizedLogCanvasControls,
   MemoizedSidebarTrigger,
+  MemoizedFlowZoomControls,
 } from "./MemoizedComponents";
 import getRandomName from "./utils/get-random-name";
 import isWrappedWithClass from "./utils/is-wrapped-with-class";
@@ -93,9 +93,19 @@ const edgeTypes = {
 export default function Page({
   view,
   setIsLoading,
+  toolbarRightOffset,
+  isChatOpen,
+  chatWidth,
+  toolbarGap,
+  isResizing,
 }: {
   view?: boolean;
   setIsLoading: (isLoading: boolean) => void;
+  toolbarRightOffset?: string;
+  isChatOpen?: boolean;
+  chatWidth?: number;
+  toolbarGap?: number;
+  isResizing?: boolean;
 }): JSX.Element {
   const uploadFlow = useUploadFlow();
   const autoSaveFlow = useAutoSaveFlow();
@@ -149,7 +159,7 @@ export default function Page({
     if (currentFlowId !== "") {
       isEmptyFlow.current = nodes.length === 0;
     }
-  }, [currentFlowId]);
+  }, [currentFlowId, nodes]);
 
   const [isAddingNote, setIsAddingNote] = useState(false);
 
@@ -204,7 +214,7 @@ export default function Page({
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [lastCopiedSelection, lastSelection, takeSnapshot, selectionMenuVisible]);
+  }, []);
 
   const { isFetching } = useGetBuildsQuery({ flowId: currentFlowId });
 
@@ -399,14 +409,7 @@ export default function Page({
       setIsDragging(false);
       setHelperLines({});
     },
-    [
-      takeSnapshot,
-      autoSaveFlow,
-      nodes,
-      edges,
-      reactFlowInstance,
-      setPositionDictionary,
-    ],
+    [autoSaveFlow, nodes, updateCurrentFlow, setPositionDictionary],
   );
 
   const onNodesChangeWithHelperLines = useCallback(
@@ -526,7 +529,7 @@ export default function Page({
         });
       }
     },
-    [takeSnapshot, addComponent],
+    [takeSnapshot, addComponent, isLocked, uploadFlow, setErrorData],
   );
 
   const onEdgeUpdateStart = useCallback(() => {
@@ -544,7 +547,7 @@ export default function Page({
         setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
       }
     },
-    [setEdges],
+    [setEdges, nodes, edges],
   );
 
   const onEdgeUpdateEnd = useCallback((_, edge: Edge): void => {
@@ -552,7 +555,7 @@ export default function Page({
       setEdges((eds) => eds.filter((edg) => edg.id !== edge.id));
     }
     edgeUpdateSuccessful.current = true;
-  }, []);
+  }, [setEdges]);
 
   const [selectionEnded, setSelectionEnded] = useState(true);
 
@@ -626,10 +629,12 @@ export default function Page({
       getNodeId,
       setFilterEdge,
       setFilterComponent,
+      shadowBoxWidth,
+      shadowBoxHeight,
     ],
   );
 
-  const handleEdgeClick = (event, edge) => {
+  const handleEdgeClick = useCallback((event, edge) => {
     if (isLocked) {
       event.preventDefault();
       event.stopPropagation();
@@ -640,14 +645,14 @@ export default function Page({
 
     const accentColor = `hsl(var(--datatype-${color}))`;
     reactFlowWrapper.current?.style.setProperty("--selected", accentColor);
-  };
+  }, [isLocked]);
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (isLocked) {
       e.preventDefault();
       e.stopPropagation();
     }
-  };
+  }, [isLocked]);
 
   useEffect(() => {
     const handleGlobalMouseMove = (event) => {
@@ -701,12 +706,13 @@ export default function Page({
             {!view && (
               <>
                 <MemoizedLogCanvasControls />
-                <MemoizedCanvasControls
-                  setIsAddingNote={setIsAddingNote}
-                  shadowBoxWidth={shadowBoxWidth}
-                  shadowBoxHeight={shadowBoxHeight}
+                <FlowToolbar
+                  rightOffset={toolbarRightOffset}
+                  isChatOpen={isChatOpen}
+                  chatWidth={chatWidth}
+                  toolbarGap={toolbarGap}
+                  isResizing={isResizing}
                 />
-                <FlowToolbar />
               </>
             )}
             <MemoizedSidebarTrigger />
@@ -763,6 +769,7 @@ export default function Page({
               <UpdateAllComponents />
               <MemoizedBackground />
               {helperLineEnabled && <HelperLines helperLines={helperLines} />}
+              <MemoizedFlowZoomControls />
             </ReactFlow>
           </div>
           <div

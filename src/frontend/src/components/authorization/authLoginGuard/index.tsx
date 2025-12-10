@@ -1,7 +1,8 @@
+import { type ReactNode } from "react";
 import { CustomNavigate } from "@/customization/components/custom-navigate";
 import useAuthStore from "@/stores/authStore";
 
-export const ProtectedLoginRoute = ({ children }) => {
+export const ProtectedLoginRoute = ({ children }: { children: ReactNode }) => {
   const autoLogin = useAuthStore((state) => state.autoLogin);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -12,7 +13,7 @@ export const ProtectedLoginRoute = ({ children }) => {
     if (redirectPath) {
       return <CustomNavigate to={redirectPath} replace />;
     }
-    return <CustomNavigate to="/home" replace />;
+    return <CustomNavigate to="/flows" replace />;
   }
 
   return children;

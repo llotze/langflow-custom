@@ -46,6 +46,8 @@ const PlaygroundPage = lazy(() => import("./pages/Playground"));
 
 const SignUp = lazy(() => import("./pages/SignUpPage"));
 
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+
 const router = createBrowserRouter(
   createRoutesFromElements([
     <Route path="/playground/:id/">
@@ -66,6 +68,31 @@ const router = createBrowserRouter(
         </ContextWrapper>
       }
     >
+      <Route index element={<LandingPage />} />
+      <Route
+        path="login"
+        element={
+          <ProtectedLoginRoute>
+            <LoginPage />
+          </ProtectedLoginRoute>
+        }
+      />
+      <Route
+        path="signup"
+        element={
+          <ProtectedLoginRoute>
+            <SignUp />
+          </ProtectedLoginRoute>
+        }
+      />
+      <Route
+        path="login/admin"
+        element={
+          <ProtectedLoginRoute>
+            <LoginAdminPage />
+          </ProtectedLoginRoute>
+        }
+      />
       <Route path="" element={<AppInitPage />}>
         <Route path="" element={<AppWrapperPage />}>
           <Route
@@ -175,30 +202,6 @@ const router = createBrowserRouter(
               </Route>
             </Route>
           </Route>
-          <Route
-            path="login"
-            element={
-              <ProtectedLoginRoute>
-                <LoginPage />
-              </ProtectedLoginRoute>
-            }
-          />
-          <Route
-            path="signup"
-            element={
-              <ProtectedLoginRoute>
-                <SignUp />
-              </ProtectedLoginRoute>
-            }
-          />
-          <Route
-            path="login/admin"
-            element={
-              <ProtectedLoginRoute>
-                <LoginAdminPage />
-              </ProtectedLoginRoute>
-            }
-          />
         </Route>
       </Route>
       <Route path="*" element={<CustomNavigate replace to="/" />} />

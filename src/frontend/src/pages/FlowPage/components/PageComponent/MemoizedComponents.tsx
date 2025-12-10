@@ -1,14 +1,12 @@
-import { Background, Panel } from "@xyflow/react";
-import { memo } from "react";
-import { useShallow } from "zustand/react/shallow";
+import { Background, Panel, useReactFlow } from "@xyflow/react";
+import { memo, useState, useEffect } from "react";
+import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
+import ShadTooltip from "@/components/common/shadTooltipComponent";
 import CanvasControlButton from "@/components/core/canvasControlsComponent/CanvasControlButton";
-import CanvasControls from "@/components/core/canvasControlsComponent/CanvasControls";
 import LogCanvasControls from "@/components/core/logCanvasControlsComponent";
-import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { ENABLE_NEW_SIDEBAR } from "@/customization/feature-flags";
-import useFlowStore from "@/stores/flowStore";
 import { cn } from "@/utils/utils";
 import { useSearchContext } from "../flowSidebarComponent";
 import { NAV_ITEMS } from "../flowSidebarComponent/components/sidebarSegmentedNav";
@@ -17,53 +15,81 @@ export const MemoizedBackground = memo(() => (
   <Background size={2} gap={20} className="" />
 ));
 
-interface MemoizedCanvasControlsProps {
-  setIsAddingNote: (value: boolean) => void;
-  shadowBoxWidth: number;
-  shadowBoxHeight: number;
-}
-
 export const MemoizedLogCanvasControls = memo(() => <LogCanvasControls />);
 
-export const MemoizedCanvasControls = memo(
-  ({
-    setIsAddingNote,
-    shadowBoxWidth,
-    shadowBoxHeight,
-  }: MemoizedCanvasControlsProps) => {
-    const isLocked = useFlowStore(
-      useShallow((state) => state.currentFlow?.locked),
-    );
+export const MemoizedFlowZoomControls = memo(() => {
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const [isAddNoteActive, setIsAddNoteActive] = useState(false);
 
-    return (
-      <CanvasControls>
-        <Button
-          unstyled
-          unselectable="on"
-          size="icon"
-          data-testid="lock-status"
-          className="flex items-center justify-center px-2 rounded-none gap-1 cursor-default"
-          title={`Lock status: ${isLocked ? "Locked" : "Unlocked"}`}
-        >
-          <ForwardedIconComponent
-            name={isLocked ? "Lock" : "Unlock"}
-            className={cn(
-              "!h-[18px] !w-[18px] text-muted-foreground",
-              isLocked && "text-destructive",
-            )}
-          />
-          {isLocked && (
-            <span className="text-xs text-destructive">Flow Locked</span>
+  useEffect(() => {
+    const handleEndAddNote = () => setIsAddNoteActive(false);
+    window.addEventListener("lf:end-add-note", handleEndAddNote);
+    return () => window.removeEventListener("lf:end-add-note", handleEndAddNote);
+  }, []);
+
+  const handleAddNote = () => {
+    window.dispatchEvent(new Event("lf:start-add-note"));
+    setIsAddNoteActive(true);
+  };
+
+  return (
+    <Panel
+      position="top-left"
+      className="bg-background rounded-lg border border-border shadow-sm p-1 flex flex-col gap-1 !m-2"
+    >
+      <ShadTooltip content="Zoom In" side="right">
+        <button 
+          onClick={() => zoomIn()} 
+          className={cn(
+            "p-1.5 rounded-md transition-all duration-200",
+            "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           )}
-        </Button>
-      </CanvasControls>
-    );
-  },
-);
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+      </ShadTooltip>
+      <ShadTooltip content="Zoom Out" side="right">
+        <button 
+          onClick={() => zoomOut()} 
+          className={cn(
+            "p-1.5 rounded-md transition-all duration-200",
+            "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          )}
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+      </ShadTooltip>
+      <ShadTooltip content="Fit View" side="right">
+        <button 
+          onClick={() => fitView({ duration: 200 })} 
+          className={cn(
+            "p-1.5 rounded-md transition-all duration-200",
+            "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          )}
+        >
+          <Maximize className="w-4 h-4" />
+        </button>
+      </ShadTooltip>
+      <ShadTooltip content="Add Sticky Notes" side="right">
+        <button
+          onClick={handleAddNote}
+          className={cn(
+            "p-1.5 rounded-md transition-all duration-200",
+            isAddNoteActive
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          )}
+        >
+          <ForwardedIconComponent name="sticky-note" className="w-4 h-4" />
+        </button>
+      </ShadTooltip>
+    </Panel>
+  );
+});
 
 export const MemoizedSidebarTrigger = memo(() => {
   const { open, toggleSidebar, setActiveSection } = useSidebar();
-  const { focusSearch, isSearchFocused } = useSearchContext();
+  const { focusSearch } = useSearchContext();
   if (ENABLE_NEW_SIDEBAR) {
     return (
       <Panel

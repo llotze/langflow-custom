@@ -2,9 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent react flow to overflow the page */
-body {
-  overflow: hidden;
+/* Prevent react flow to overflow the page - handled per component now */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 .App {

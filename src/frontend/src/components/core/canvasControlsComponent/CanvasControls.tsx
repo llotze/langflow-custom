@@ -24,7 +24,7 @@ const CanvasControls = ({ children }: { children?: ReactNode }) => {
     <Panel
       data-testid="main_canvas_controls"
       className="react-flow__controls !left-auto !m-2 flex !flex-row rounded-md border border-border bg-background fill-foreground stroke-foreground text-primary [&>button]:border-0"
-      position="bottom-right"
+      position="top-left"
     >
       {children}
       {children && (
