@@ -183,7 +183,7 @@ export function ParameterRenderComponent({
         return (
           <PromptAreaComponent
             {...baseInputProps}
-            readonly={!!nodeClass.flow}
+            readonly={!!nodeClass.flow || baseInputProps.readonly}
             field_name={name}
             id={`promptarea_${id}`}
           />

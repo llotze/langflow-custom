@@ -56,6 +56,9 @@ export default defineConfig(({ mode }) => {
       "process.env.LANGFLOW_MCP_COMPOSER_ENABLED": JSON.stringify(
         envLangflow.LANGFLOW_MCP_COMPOSER_ENABLED ?? "true",
       ),
+      "process.env.VITE_MCP_SERVER_URL": JSON.stringify(
+        env.VITE_MCP_SERVER_URL || envLangflow.VITE_MCP_SERVER_URL || "http://localhost:3001",
+      ),
     },
     plugins: [react(), svgr(), tsconfigPaths()],
     server: {

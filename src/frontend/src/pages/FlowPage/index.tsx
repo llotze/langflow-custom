@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useBlocker, useParams } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useGetFlow } from "@/controllers/API/queries/flows/use-get-flow";
@@ -6,6 +6,7 @@ import { useGetTypes } from "@/controllers/API/queries/flows/use-get-types";
 import { ENABLE_NEW_SIDEBAR } from "@/customization/feature-flags";
 import { useCustomNavigate } from "@/customization/hooks/use-custom-navigate";
 import useSaveFlow from "@/hooks/flows/use-save-flow";
+import { useFlowSSE } from "@/hooks/flows/use-flow-sse";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SaveChangesModal } from "@/modals/saveChangesModal";
 import useAlertStore from "@/stores/alertStore";
@@ -18,6 +19,8 @@ import {
   FlowSidebarComponent,
 } from "./components/flowSidebarComponent";
 import Page from "./components/PageComponent";
+import { BotIcon } from "./components/GracefulAgent/BotIcon";
+import { ChatPanel } from "./components/GracefulAgent/ChatPanel";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const types = useTypesStore((state) => state.types);
@@ -31,6 +34,21 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const currentSavedFlow = useFlowsManagerStore((state) => state.currentFlow);
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [headerOffset, setHeaderOffset] = useState(0);
+  const flowPageRef = useRef<HTMLDivElement | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+
+  const [chatWidth, setChatWidth] = useState<number>(() => {
+    const defaultWidth = 420;
+    const minWidth = 320;
+    const maxWidth = Math.min(720, typeof window !== "undefined" ? window.innerWidth * 0.7 : 720);
+    return Math.min(Math.max(defaultWidth, minWidth), maxWidth);
+  });
+
+  const minChatWidth = 320;
+  const maxChatWidth = Math.min(720, typeof window !== "undefined" ? window.innerWidth * 0.7 : 720);
+  const toolbarGap = 12;
 
   const changesNotSaved =
     customStringify(currentFlow) !== customStringify(currentSavedFlow) &&
@@ -52,6 +70,30 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const stopBuilding = useFlowStore((state) => state.stopBuilding);
 
   const { mutateAsync: getFlow } = useGetFlow();
+
+  const setNodes = useFlowStore((state) => state.setNodes);
+  const setEdges = useFlowStore((state) => state.setEdges);
+
+  // ✅ SSE Integration - Memoize callback to prevent reconnects
+  const handleFlowUpdate = useCallback((data: { nodes: any[]; edges: any[] }) => {
+    console.log('Received flow update from SSE, applying to canvas...');
+    setNodes(data.nodes);
+    setEdges(data.edges);
+  }, [setNodes, setEdges]);
+
+  const { connected: sseConnected } = useFlowSSE({
+    flowId: id,
+    enabled: !!id && !view,
+    onUpdate: handleFlowUpdate,
+  });
+
+  useEffect(() => {
+    if (sseConnected) {
+      console.log('✅ SSE connection established');
+    } else {
+      console.log('⚠️ SSE connection not established');
+    }
+  }, [sseConnected]);
 
   const handleSave = () => {
     let saving = true;
@@ -90,7 +132,7 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (changesNotSaved || isBuilding) {
         event.preventDefault();
-        event.returnValue = ""; // Required for Chrome
+        event.returnValue = "";
       }
     };
 
@@ -101,7 +143,6 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
     };
   }, [changesNotSaved, isBuilding]);
 
-  // Set flow tab id
   useEffect(() => {
     const awaitgetTypes = async () => {
       if (flows && currentFlowId === "" && Object.keys(types).length > 0) {
@@ -159,9 +200,31 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
 
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    const measureHeader = () => {
+      const top = flowPageRef.current?.getBoundingClientRect().top ?? 0;
+      setHeaderOffset(top < 0 ? 0 : top);
+    };
+
+    measureHeader();
+    window.addEventListener("resize", measureHeader);
+    return () => window.removeEventListener("resize", measureHeader);
+  }, []);
+
+  const [sessionId] = useState(() => {
+    const stored = localStorage.getItem(`chat_session_${id}`);
+    if (stored) return stored;
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem(`chat_session_${id}`, newSessionId);
+    return newSessionId;
+  });
+
   return (
     <>
-      <div className="flow-page-positioning">
+      <div
+        className="flow-page-positioning"
+        ref={flowPageRef}
+      >
         {currentFlow && (
           <div className="flex h-full overflow-hidden">
             <SidebarProvider
@@ -173,7 +236,13 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
                 {!view && <FlowSidebarComponent isLoading={isLoading} />}
                 <main className="flex w-full overflow-hidden">
                   <div className="h-full w-full">
-                    <Page setIsLoading={setIsLoading} />
+                    <Page
+                      setIsLoading={setIsLoading}
+                      isChatOpen={isChatOpen}
+                      chatWidth={chatWidth}
+                      toolbarGap={toolbarGap}
+                      isResizing={isResizing}
+                    />
                   </div>
                 </main>
               </FlowSearchProvider>
@@ -181,6 +250,25 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
           </div>
         )}
       </div>
+
+      <BotIcon 
+        onBotClick={() => setIsChatOpen(true)} 
+        isChatOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
+      <ChatPanel 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)}
+        flowId={(id || currentFlowId || "").trim()}
+        sessionId={sessionId}
+        headerOffset={headerOffset}
+        chatWidth={chatWidth}
+        setChatWidth={setChatWidth}
+        minChatWidth={minChatWidth}
+        maxChatWidth={maxChatWidth}
+        toolbarGap={toolbarGap}
+        setIsResizing={setIsResizing}
+      />
       {blocker.state === "blocked" && (
         <>
           {!isBuilding && currentSavedFlow && (

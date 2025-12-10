@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import AlertDropdown from "@/alerts/alertDropDown";
 import DataStaxLogo from "@/assets/DataStaxLogo.svg?react";
 import LangflowLogo from "@/assets/LangflowLogo.svg?react";
+import GracefulGLogo from "@/assets/graceful/graceful-full-logo.png";
 import ForwardedIconComponent from "@/components/common/genericIconComponent";
 import ShadTooltip from "@/components/common/shadTooltipComponent";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import FlowMenu from "./components/FlowMenu";
 export default function AppHeader(): JSX.Element {
   const notificationCenter = useAlertStore((state) => state.notificationCenter);
   const navigate = useCustomNavigate();
+  const location = useLocation();
+  const params = useParams();
   const [activeState, setActiveState] = useState<"notifications" | null>(null);
   const notificationRef = useRef<HTMLButtonElement | null>(null);
   const notificationContentRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +53,20 @@ export default function AppHeader(): JSX.Element {
       : "hidden";
   };
 
+  const handleLogoClick = () => {
+    const pathname = location.pathname;
+    // Check if we're inside a flow (has an id parameter or path contains /flow/)
+    const isInsideFlow = params.id !== undefined || pathname.includes("/flow/");
+    
+    if (isInsideFlow) {
+      // Inside a flow → navigate to flows page
+      navigate("/flows");
+    } else {
+      // Not in a flow → navigate to landing/home page
+      navigate("/");
+    }
+  };
+
   return (
     <div
       className={`z-10 flex h-[48px] w-full items-center justify-between border-b pr-5 pl-2.5 dark:bg-background`}
@@ -61,14 +79,18 @@ export default function AppHeader(): JSX.Element {
       >
         <Button
           unstyled
-          onClick={() => navigate("/")}
-          className="mr-1 flex h-8 w-8 items-center"
+          onClick={handleLogoClick}
+          className="mr-1 flex items-center gap-2"
           data-testid="icon-ChevronLeft"
         >
           {ENABLE_DATASTAX_LANGFLOW ? (
             <DataStaxLogo className="fill-black dark:fill-[white]" />
           ) : (
-            <LangflowLogo className="h-5 w-5" />
+            <img 
+              src={GracefulGLogo} 
+              alt="Graceful AI" 
+              className="h-8 w-auto"
+            />
           )}
         </Button>
         {ENABLE_DATASTAX_LANGFLOW && (

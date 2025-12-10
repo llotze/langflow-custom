@@ -1,5 +1,11 @@
 # This is to avoid Opencommit hook from getting pushed
 prepare-commit-msg
+
+# Flow Builder Agent - Environment and secrets
+flow_builder_agent/.env
+flow_builder_agent/.cache/
+*.env
+
 # Logs
 logs
 *.log
