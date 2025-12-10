@@ -150,8 +150,7 @@ export function ChatPanel({
     const container = scrollContainerRef.current;
     const target = messageRefs.current[pendingScrollId];
     if (container && target) {
-      const rawTop = target.offsetTop - container.offsetTop;
-      const top = Math.max(0, rawTop - 16); // add breathing room above the target
+      const top = target.offsetTop - container.offsetTop;
       container.scrollTo({ top, behavior: "smooth" });
     }
     setPendingScrollId(null);

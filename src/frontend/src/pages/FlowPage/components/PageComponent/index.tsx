@@ -702,18 +702,7 @@ export default function Page({
     <div className="h-full w-full bg-canvas" ref={reactFlowWrapper}>
       {showCanvas ? (
         <>
-          <div
-            id="react-flow-id"
-            className="h-full bg-canvas relative"
-            style={
-              isChatOpen && chatWidth
-                ? {
-                    width: `calc(100% - ${chatWidth + (toolbarGap ?? 0)}px)`,
-                    maxWidth: "100%",
-                  }
-                : { width: "100%" }
-            }
-          >
+          <div id="react-flow-id" className="h-full w-full bg-canvas relative">
             {!view && (
               <>
                 <MemoizedLogCanvasControls />
