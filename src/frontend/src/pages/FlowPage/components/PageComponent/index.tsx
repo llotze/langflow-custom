@@ -93,9 +93,19 @@ const edgeTypes = {
 export default function Page({
   view,
   setIsLoading,
+  toolbarRightOffset,
+  isChatOpen,
+  chatWidth,
+  toolbarGap,
+  isResizing,
 }: {
   view?: boolean;
   setIsLoading: (isLoading: boolean) => void;
+  toolbarRightOffset?: string;
+  isChatOpen?: boolean;
+  chatWidth?: number;
+  toolbarGap?: number;
+  isResizing?: boolean;
 }): JSX.Element {
   const uploadFlow = useUploadFlow();
   const autoSaveFlow = useAutoSaveFlow();
@@ -692,11 +702,28 @@ export default function Page({
     <div className="h-full w-full bg-canvas" ref={reactFlowWrapper}>
       {showCanvas ? (
         <>
-          <div id="react-flow-id" className="h-full w-full bg-canvas relative">
+          <div
+            id="react-flow-id"
+            className="h-full bg-canvas relative"
+            style={
+              isChatOpen && chatWidth
+                ? {
+                    width: `calc(100% - ${chatWidth + (toolbarGap ?? 0)}px)`,
+                    maxWidth: "100%",
+                  }
+                : { width: "100%" }
+            }
+          >
             {!view && (
               <>
                 <MemoizedLogCanvasControls />
-                <FlowToolbar />
+                <FlowToolbar
+                  rightOffset={toolbarRightOffset}
+                  isChatOpen={isChatOpen}
+                  chatWidth={chatWidth}
+                  toolbarGap={toolbarGap}
+                  isResizing={isResizing}
+                />
               </>
             )}
             <MemoizedSidebarTrigger />

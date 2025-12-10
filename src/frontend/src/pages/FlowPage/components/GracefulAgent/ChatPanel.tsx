@@ -1,15 +1,11 @@
-import {
-  Bot,
-  X,
-  Lightbulb,
-  MousePointerClick,
-  Send,
-} from "lucide-react";
+import { X, Lightbulb, MousePointerClick, Send } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { mcpApiHelpers } from "@/controllers/API/mcp-api";
+import gracefulRobotHead from "@/assets/graceful/graceful-robot-head.png";
 
 // ---- Add these interfaces ----
 interface ChatMessage {
@@ -26,89 +22,100 @@ interface ChatPanelProps {
   onClose: () => void;
   flowId: string;
   sessionId: string;
+  headerOffset?: number;
+  chatWidth?: number;
+  setChatWidth?: (width: number) => void;
+  minChatWidth?: number;
+  maxChatWidth?: number;
+  toolbarGap?: number;
+  setIsResizing?: (val: boolean) => void;
 }
 
-export function ChatPanel({ isOpen, onClose, flowId, sessionId }: ChatPanelProps) {
+export function ChatPanel({
+  isOpen,
+  onClose,
+  flowId,
+  sessionId,
+  headerOffset = 0,
+  chatWidth = 420,
+  setChatWidth,
+  minChatWidth = 320,
+  maxChatWidth = 720,
+  toolbarGap = 12,
+  setIsResizing,
+}: ChatPanelProps) {
   const [mode, setMode] = useState<"ideate" | "edit">("ideate");
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+  const [isResizingLocal, setIsResizingLocal] = useState(false);
 
   // ---- Fetch chat history on open/flow/session change ----
   useEffect(() => {
     if (isOpen && flowId && sessionId) {
       axios
-        .get(`/api/v1/chat-history`, { params: { flow_id: flowId, session_id: sessionId } })
-        .then((res) => setMessages(res.data));
+        .get<ChatMessage[]>(`/api/v1/chat-history/`, { params: { flow_id: flowId, session_id: sessionId } })
+        .then((res) => setMessages(res.data))
+        .catch((err) => {
+          console.error("Error fetching chat history:", err);
+          setMessages([]);
+        });
     }
   }, [isOpen, flowId, sessionId]);
 
-  // ---- Scroll to bottom on new message ----
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // ---- Send message and get Claude response ----
+  // ---- Send message and get response ----
   const handleSendMessage = async () => {
     if (!inputValue.trim() || loading) return;
+    
+    // Validate flowId before sending
+    if (!flowId || flowId.trim() === "") {
+      console.error("Error: flowId is required");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(),
+          flow_id: flowId || "",
+          session_id: sessionId,
+          sender: "assistant",
+          message: "Error: No flow ID available. Please ensure you're working with a valid flow.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+
     setLoading(true);
 
-    // 1. Store user message in backend
-    await axios.post("/api/v1/chat-history", {
-      flow_id: flowId,
-      session_id: sessionId,
-      sender: "user",
-      message: inputValue,
-    });
+    const messageId =
+      (typeof crypto !== "undefined" && "randomUUID" in crypto && crypto.randomUUID()) ||
+      `msg_${Date.now()}`;
 
-    // 2. Optimistically update UI
+    const userMessage = inputValue;
+    
+    // Optimistically update UI with user message
     setMessages((prev) => [
       ...prev,
       {
-        id: Math.random().toString(),
+        id: messageId,
         flow_id: flowId,
         session_id: sessionId,
         sender: "user",
-        message: inputValue,
+        message: userMessage,
         timestamp: new Date().toISOString(),
       },
     ]);
+    setPendingScrollId(messageId);
     setInputValue("");
 
-    // 3. Call MCP server for Claude response
+    // Process message using MCP assistant (no flow run)
     try {
-      const mcpResponse = await axios.post(
-        process.env.REACT_APP_MCP_SERVER_URL || "http://localhost:5100/tool", // adjust as needed
-        {
-          name: "get_claude_response_with_history",
-          arguments: {
-            flow_id: flowId,
-            session_id: sessionId,
-          },
-        }
-      );
-      // The MCP tool should:
-      // - fetch chat history for flow/session
-      // - call Claude with full history
-      // - store Claude's response in chat history
-      // - return the Claude message
+      const assistantRes = await mcpApiHelpers.assistantChat(flowId, sessionId, userMessage);
+      const assistantPayload = (assistantRes.data || {}) as { reply?: string; message?: string };
+      const assistantText = assistantPayload.reply ?? assistantPayload.message ?? "I couldn't find a response from the assistant.";
 
-      const assistantMsg = mcpResponse.data?.data?.message || mcpResponse.data?.message;
-      if (assistantMsg) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Math.random().toString(),
-            flow_id: flowId,
-            session_id: sessionId,
-            sender: "assistant",
-            message: assistantMsg,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-      }
-    } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
@@ -116,7 +123,20 @@ export function ChatPanel({ isOpen, onClose, flowId, sessionId }: ChatPanelProps
           flow_id: flowId,
           session_id: sessionId,
           sender: "assistant",
-          message: "Sorry, there was an error getting a response from Claude.",
+          message: assistantText,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } catch (err: any) {
+      console.error("Error processing message with MCP:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(),
+          flow_id: flowId,
+          session_id: sessionId,
+          sender: "assistant",
+          message: `Sorry, there was an error: ${err?.response?.data?.error || err?.message || "Unknown error"}`,
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -124,9 +144,26 @@ export function ChatPanel({ isOpen, onClose, flowId, sessionId }: ChatPanelProps
     setLoading(false);
   };
 
+  // ---- Scroll the submitted message to the top of the view ----
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    const container = scrollContainerRef.current;
+    const target = messageRefs.current[pendingScrollId];
+    if (container && target) {
+      const rawTop = target.offsetTop - container.offsetTop;
+      const top = Math.max(0, rawTop - 16); // add breathing room above the target
+      container.scrollTo({ top, behavior: "smooth" });
+    }
+    setPendingScrollId(null);
+  }, [pendingScrollId]);
+
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
   };
+
+  const panelHeight = `calc(100vh - ${headerOffset}px)`;
+  const closedTop = headerOffset + 16;
+  const dragState = useRef<{ startX: number; startWidth: number } | null>(null);
 
   return (
     <motion.div
@@ -134,43 +171,87 @@ export function ChatPanel({ isOpen, onClose, flowId, sessionId }: ChatPanelProps
       animate={
         isOpen
           ? {
-              width: 320,
-              height: "calc(100vh - 140px)",
+              width: chatWidth,
+              height: panelHeight,
               opacity: 1,
               borderRadius: 12,
-              top: 120,
-              right: 16,
+              top: headerOffset,
+              right: 0,
+              x: 0,
             }
           : {
               width: 36,
               height: 36,
               opacity: 0,
               borderRadius: 18,
-              top: 52,
+              top: closedTop,
               right: 16,
+              x: chatWidth + toolbarGap + 16,
             }
       }
-      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-      className="absolute bg-white border border-gray-200 shadow-lg overflow-hidden flex flex-col pointer-events-auto"
+      transition={{
+        duration: isResizingLocal ? 0 : 0.5,
+        ease: [0.4, 0, 0.2, 1],
+      }}
+      className="fixed bg-white border border-gray-200 shadow-lg overflow-hidden flex flex-col pointer-events-auto"
       style={{
         transformOrigin: "top right",
+        maxWidth: "100vw",
+        height: isOpen ? panelHeight : undefined,
+        width: isOpen ? chatWidth : undefined,
         pointerEvents: isOpen ? "auto" : "none",
+        zIndex: 60,
       }}
     >
+      {/* Resize handle on the left edge */}
+      {isOpen && setChatWidth && (
+        <div
+          className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10"
+          style={{ transform: "translateX(-1px)" }}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            dragState.current = { startX: e.clientX, startWidth: chatWidth };
+            setIsResizing?.(true);
+            setIsResizingLocal(true);
+            const handleMove = (ev: PointerEvent) => {
+              if (!dragState.current) return;
+              const delta = dragState.current.startX - ev.clientX;
+              const next = Math.min(
+                Math.max(dragState.current.startWidth + delta, minChatWidth),
+                maxChatWidth,
+              );
+              setChatWidth(next);
+            };
+            const handleUp = () => {
+              dragState.current = null;
+              setIsResizing?.(false);
+              setIsResizingLocal(false);
+              window.removeEventListener("pointermove", handleMove);
+              window.removeEventListener("pointerup", handleUp);
+              window.removeEventListener("pointercancel", handleUp);
+            };
+            window.addEventListener("pointermove", handleMove);
+            window.addEventListener("pointerup", handleUp);
+            window.addEventListener("pointercancel", handleUp);
+          }}
+          aria-label="Resize chat width"
+          title="Resize chat width"
+        />
+      )}
+
       {isOpen && (
         <>
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="bg-red-600 text-white p-1.5 rounded-full">
-                  <Bot className="w-4 h-4" />
-                </div>
+                <img
+                  src={gracefulRobotHead}
+                  alt="Hopper"
+                  className="w-12 h-12 object-contain"
+                />
                 <div>
-                  <h3 className="text-sm">Graceful</h3>
-                  <p className="text-xs text-gray-500">
-                    What's up for today?
-                  </p>
+                  <h3 className="text-sm font-medium">Hopper</h3>
                 </div>
               </div>
               <Button
@@ -205,12 +286,18 @@ export function ChatPanel({ isOpen, onClose, flowId, sessionId }: ChatPanelProps
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div
+            className="flex-1 overflow-y-auto overflow-x-hidden p-4"
+            ref={scrollContainerRef}
+          >
             {/* Chat history */}
             <div className="mb-4">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
+                  ref={(el) => {
+                    messageRefs.current[msg.id] = el;
+                  }}
                   className={`mb-2 flex ${
                     msg.sender === "user" ? "justify-end" : "justify-start"
                   }`}
@@ -219,14 +306,14 @@ export function ChatPanel({ isOpen, onClose, flowId, sessionId }: ChatPanelProps
                     className={`rounded-lg px-3 py-2 text-xs max-w-[80%] ${
                       msg.sender === "user"
                         ? "bg-blue-100 text-blue-900"
-                        : "bg-gray-100 text-gray-900"
+                      : "bg-gray-100 text-gray-900"
                     }`}
+                  style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
                   >
                     {msg.message}
                   </div>
                 </div>
               ))}
-              <div ref={messagesEndRef} />
             </div>
             {mode === "ideate" ? (
               // Ideate Mode Empty State & Suggestions
