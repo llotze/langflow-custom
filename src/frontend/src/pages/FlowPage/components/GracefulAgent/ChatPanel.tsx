@@ -1,4 +1,4 @@
-import { X, Lightbulb, MousePointerClick, Send } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from "framer-motion";
@@ -7,7 +7,6 @@ import axios from "axios";
 import { mcpApiHelpers } from "@/controllers/API/mcp-api";
 import gracefulRobotHead from "@/assets/graceful/graceful-robot-head.png";
 
-// ---- Add these interfaces ----
 interface ChatMessage {
   id: string;
   flow_id: string;
@@ -44,7 +43,7 @@ export function ChatPanel({
   toolbarGap = 12,
   setIsResizing,
 }: ChatPanelProps) {
-  const [mode, setMode] = useState<"ideate" | "edit">("ideate");
+  const [mode, setMode] = useState<"ideate" | "edit">("edit");
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -150,16 +149,12 @@ export function ChatPanel({
     const container = scrollContainerRef.current;
     const target = messageRefs.current[pendingScrollId];
     if (container && target) {
-      const offset = 12; // small gap from the header
+      const offset = 12;
       const top = target.offsetTop - container.offsetTop - offset;
       container.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
     }
     setPendingScrollId(null);
   }, [pendingScrollId]);
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
-  };
 
   const panelHeight = `calc(100vh - ${headerOffset}px)`;
   const closedTop = headerOffset + 16;
@@ -203,7 +198,6 @@ export function ChatPanel({
         zIndex: 60,
       }}
     >
-      {/* Resize handle on the left edge */}
       {isOpen && setChatWidth && (
         <div
           className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10"
@@ -306,76 +300,28 @@ export function ChatPanel({
                     className={`rounded-lg px-3 py-2 text-xs max-w-[80%] ${
                       msg.sender === "user"
                         ? "bg-blue-100 text-blue-900"
-                      : "bg-gray-100 text-gray-900"
+                        : "bg-gray-100 text-gray-900"
                     }`}
-                  style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
+                    style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
                   >
                     {msg.message}
                   </div>
                 </div>
               ))}
+              
+              {/* Loading bubble */}
+              {loading && (
+                <div className="mb-2 flex justify-start">
+                  <div className="rounded-lg px-3 py-2 text-xs bg-gray-100 text-gray-900">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            {mode === "ideate" ? (
-              // Ideate Mode Empty State & Suggestions
-              <div className="h-full flex flex-col items-center justify-center text-center px-6">
-                <div className="mb-6">
-                  <Lightbulb className="w-12 h-12 text-gray-400 mx-auto" />
-                </div>
-                <div className="space-y-4 w-full">
-                  <div
-                    className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity"
-                    onClick={() =>
-                      handleSuggestionClick(
-                        "Create an auto responder to email from students and notify me about a draft to give them"
-                      )
-                    }
-                  >
-                    <div className="text-center">
-                      <p className="text-xs text-gray-900 mb-1">
-                        Suggestion of the Day
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Create an auto responder to email from students and notify me about a draft to give them
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity px-[30px] py-[0px]"
-                    onClick={() =>
-                      handleSuggestionClick("View templates that are out there")
-                    }
-                  >
-                    <div className="text-center">
-                      <p className="text-xs text-gray-600">
-                        View{" "}
-                        <span style={{ textDecoration: "underline" }}>
-                          Templates
-                        </span>{" "}
-                        that are out there
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    className="flex items-start gap-2 cursor-pointer hover:opacity-70 transition-opacity px-[80px] py-[0px]"
-                    onClick={() => handleSuggestionClick("Shuffle it up")}
-                  >
-                    <div className="text-center">
-                      <p className="text-xs text-gray-600">Shuffle it up</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              // Edit Mode Empty State
-              <div className="h-full flex flex-col items-center justify-center text-center px-6">
-                <div className="mb-4">
-                  <MousePointerClick className="w-12 h-12 text-gray-400 mx-auto" />
-                </div>
-                <p className="text-sm text-gray-600">
-                  Please select the components in the canvas to edit
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Input Area */}
