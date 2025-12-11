@@ -54,17 +54,7 @@ export default function AppHeader(): JSX.Element {
   };
 
   const handleLogoClick = () => {
-    const pathname = location.pathname;
-    // Check if we're inside a flow (has an id parameter or path contains /flow/)
-    const isInsideFlow = params.id !== undefined || pathname.includes("/flow/");
-    
-    if (isInsideFlow) {
-      // Inside a flow → navigate to flows page
-      navigate("/flows");
-    } else {
-      // Not in a flow → navigate to landing/home page
-      navigate("/");
-    }
+      navigate("/flows"); 
   };
 
   return (
