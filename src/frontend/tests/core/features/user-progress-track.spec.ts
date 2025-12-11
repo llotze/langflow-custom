@@ -1,7 +1,6 @@
-import { DISCORD_URL, GITHUB_URL } from "../../../src/constants/constants";
+import { GITHUB_URL } from "../../../src/constants/constants";
 import { expect, test } from "../../fixtures";
 import { addNewUserAndLogin } from "../../utils/add-new-user-and-loggin";
-import { awaitBootstrapTest } from "../../utils/await-bootstrap-test";
 
 test(
   "admin user must be able to track their progress in getting started",
@@ -33,7 +32,6 @@ test(
     await expect(page.getByTestId("mainpage_title")).toBeVisible();
     await expect(page.getByTestId("empty_page_description")).toBeVisible();
     await expect(page.getByTestId("empty_page_github_button")).toBeVisible();
-    await expect(page.getByTestId("empty_page_discord_button")).toBeVisible();
     await expect(
       page.getByTestId("empty_page_drag_and_drop_text"),
     ).toBeVisible();
@@ -79,42 +77,11 @@ test(
       page.getByTestId("create_flow_icon_get_started"),
     ).toBeVisible();
     await expect(
-      page.getByTestId("discord_joined_icon_get_started"),
-    ).not.toBeVisible();
-    await expect(
       page.getByTestId("get_started_progress_percentage").first(),
-    ).toHaveText("66%");
-
-    await page.getByTestId("discord_joined_btn_get_started").click();
-    const pagePromiseDiscord = context.waitForEvent("page");
-
-    const newPageDiscord = await pagePromiseDiscord;
-    await newPageDiscord.waitForTimeout(3000);
-    const newUrlDiscord = newPageDiscord.url();
-
-    await expect(newUrlDiscord).toContain(DISCORD_URL);
-
-    await newPageDiscord.close();
-
-    await expect(page.getByTestId("get_started_progress_title")).toBeVisible();
-    await expect(
-      page.getByTestId("discord_joined_icon_get_started"),
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("create_flow_icon_get_started"),
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("github_starred_icon_get_started"),
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("get_started_progress_percentage").first(),
-    ).toHaveText("100%");
+    ).toHaveText("50%");
 
     await page.getByTestId("close_get_started_dialog").click();
 
-    await expect(
-      page.getByTestId("discord_joined_icon_get_started"),
-    ).not.toBeVisible();
     await expect(
       page.getByTestId("create_flow_icon_get_started"),
     ).not.toBeVisible();
@@ -154,7 +121,6 @@ test(
     await expect(page.getByTestId("mainpage_title")).toBeVisible();
     await expect(page.getByTestId("empty_page_description")).toBeVisible();
     await expect(page.getByTestId("empty_page_github_button")).toBeVisible();
-    await expect(page.getByTestId("empty_page_discord_button")).toBeVisible();
     await expect(
       page.getByTestId("empty_page_drag_and_drop_text"),
     ).toBeVisible();
@@ -200,42 +166,11 @@ test(
       page.getByTestId("create_flow_icon_get_started"),
     ).toBeVisible();
     await expect(
-      page.getByTestId("discord_joined_icon_get_started"),
-    ).not.toBeVisible();
-    await expect(
       page.getByTestId("get_started_progress_percentage").first(),
-    ).toHaveText("66%");
-
-    await page.getByTestId("discord_joined_btn_get_started").click();
-    const pagePromiseDiscord = context.waitForEvent("page");
-
-    const newPageDiscord = await pagePromiseDiscord;
-    await newPageDiscord.waitForTimeout(3000);
-    const newUrlDiscord = newPageDiscord.url();
-
-    await expect(newUrlDiscord).toContain(DISCORD_URL);
-
-    await newPageDiscord.close();
-
-    await expect(page.getByTestId("app-header")).toBeVisible();
-    await expect(
-      page.getByTestId("discord_joined_icon_get_started"),
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("create_flow_icon_get_started"),
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("github_starred_icon_get_started"),
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("get_started_progress_percentage").first(),
-    ).toHaveText("100%");
+    ).toHaveText("50%");
 
     await page.getByTestId("close_get_started_dialog").click();
 
-    await expect(
-      page.getByTestId("discord_joined_icon_get_started"),
-    ).not.toBeVisible();
     await expect(
       page.getByTestId("create_flow_icon_get_started"),
     ).not.toBeVisible();

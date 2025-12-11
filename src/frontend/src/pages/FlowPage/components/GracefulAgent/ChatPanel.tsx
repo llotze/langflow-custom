@@ -57,6 +57,9 @@ export function ChatPanel({
   const [showApiKeyInput, setShowApiKeyInput] = useState(!hasUserApiKey());
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeyError, setApiKeyError] = useState("");
+  
+  // Add ref to store EventSource instance
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   // ---- Fetch chat history on open/flow/session change ----
   useEffect(() => {
@@ -70,6 +73,69 @@ export function ChatPanel({
         });
     }
   }, [isOpen, flowId, sessionId]);
+
+  // ---- SSE Connection Management ----
+  useEffect(() => {
+    // Only connect if panel is open and we have a flowId
+    if (!isOpen || !flowId) {
+      return;
+    }
+
+    // Close existing connection if any
+    if (eventSourceRef.current) {
+      console.log('🧹 Closing previous SSE connection');
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+
+    // Create new SSE connection
+    const mcpServerUrl = process.env.VITE_MCP_SERVER_URL || 'http://localhost:3001';
+    const sseUrl = `${mcpServerUrl}/mcp/api/flow-updates/${flowId}`;
+    
+    console.log(`🔌 Connecting to SSE for flow ${flowId}...`);
+    
+    const eventSource = new EventSource(sseUrl);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('✅ SSE connected successfully');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📨 SSE update received:', data);
+        
+        // Handle flow updates here if needed
+        if (data.type === 'flow_updated') {
+          // You could trigger a flow refresh or show a notification
+          console.log('Flow was updated via SSE');
+        }
+      } catch (err) {
+        console.error('Error parsing SSE message:', err);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE error:', error);
+      
+      // EventSource automatically reconnects, so we only log errors
+      // Don't close the connection unless it's permanently closed
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('SSE connection closed permanently');
+        eventSourceRef.current = null;
+      }
+    };
+
+    // Cleanup function: Close connection when component unmounts or flowId changes
+    return () => {
+      console.log('🧹 Cleaning up SSE connection');
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [isOpen, flowId]); // Only re-run when isOpen or flowId changes
 
   // ---- Send message and get response ----
   const handleSendMessage = async () => {
@@ -256,7 +322,7 @@ export function ChatPanel({
         height: isOpen ? panelHeight : undefined,
         width: isOpen ? chatWidth : undefined,
         pointerEvents: isOpen ? "auto" : "none",
-        zIndex: 60,
+        zIndex: 30,
       }}
     >
       {isOpen && setChatWidth && (
