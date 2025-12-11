@@ -93,7 +93,8 @@ USER user
 WORKDIR /app
 
 ENV LANGFLOW_HOST=0.0.0.0
-ENV LANGFLOW_PORT=7860
+ENV LANGFLOW_PORT=${PORT:-7860}
 
 CMD ["langflow", "run"]
 
+# CMD sh -c "LANGFLOW_PORT=${PORT:-7860} langflow run"

@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { cn } from "@/utils/utils";
+import { useDarkStore } from "@/stores/darkStore";
 import { mcpApiHelpers, hasUserApiKey, setUserApiKey, clearUserApiKey } from "@/controllers/API/mcp-api";
 import gracefulRobotHead from "@/assets/graceful/graceful-robot-head.png";
 
@@ -43,6 +45,7 @@ export function ChatPanel({
   toolbarGap = 12,
   setIsResizing,
 }: ChatPanelProps) {
+  const isDark = useDarkStore((state) => state.dark);
   const [mode, setMode] = useState<"ideate" | "edit">("edit");
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -240,7 +243,13 @@ export function ChatPanel({
         duration: isResizingLocal ? 0 : 0.5,
         ease: [0.4, 0, 0.2, 1],
       }}
-      className="fixed bg-white border border-gray-200 shadow-lg overflow-hidden flex flex-col pointer-events-auto"
+      // Invert chat theme when dark mode is on so Hopper matches the app shell
+      className={cn(
+        "fixed border shadow-lg overflow-hidden flex flex-col pointer-events-auto transition-colors",
+        isDark
+          ? "bg-zinc-900 border-zinc-800 text-zinc-100"
+          : "bg-white border-gray-200 text-gray-900",
+      )}
       style={{
         transformOrigin: "top right",
         maxWidth: "100vw",
@@ -288,7 +297,12 @@ export function ChatPanel({
       {isOpen && (
         <>
           {/* Header */}
-          <div className="p-4 border-b border-gray-200">
+          <div
+            className={cn(
+              "p-4 border-b",
+              isDark ? "border-zinc-800" : "border-gray-200",
+            )}
+          >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <img
@@ -349,25 +363,32 @@ export function ChatPanel({
 
             {/* API Key Setup UI */}
             {showApiKeyInput && (
-              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div
+                className={cn(
+                  "mt-3 p-3 border rounded-lg",
+                  isDark ? "bg-amber-900/20 border-amber-800 text-amber-50" : "bg-yellow-50 border-yellow-200",
+                )}
+              >
                 <div className="flex items-start gap-2">
                   <div className="flex-shrink-0 text-xl">🔑</div>
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-1">
-                      <h4 className="text-xs font-semibold text-gray-900">
+                    <div className="flex items-start mb-1">
+                      <h4
+                        className={cn(
+                          "text-xs font-semibold",
+                          isDark ? "text-zinc-50" : "text-gray-900",
+                        )}
+                      >
                         Langflow API Key {hasUserApiKey() ? "(Optional)" : "Required"}
                       </h4>
-                      {/* Close Settings Button */}
-                      <button
-                        onClick={() => setShowApiKeyInput(false)}
-                        className="text-gray-400 hover:text-gray-600 -mt-1 -mr-1"
-                        title="Close settings"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </div>
                     
-                    <p className="text-xs text-gray-600 mb-2">
+                    <p
+                      className={cn(
+                        "text-xs mb-2",
+                        isDark ? "text-zinc-300" : "text-gray-600",
+                      )}
+                    >
                       {hasUserApiKey() 
                         ? "Update your API key or clear it below"
                         : "Create an API key in Settings → API Keys"
@@ -388,7 +409,12 @@ export function ChatPanel({
                           }
                         }}
                         placeholder={hasUserApiKey() ? "Enter new API key..." : "sk-lf-..."}
-                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className={cn(
+                          "flex-1 px-2 py-1.5 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500",
+                          isDark
+                            ? "bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
+                            : "border-gray-300",
+                        )}
                       />
                       <button
                         onClick={handleSaveApiKey}
@@ -399,13 +425,13 @@ export function ChatPanel({
                     </div>
                     
                     {apiKeyError && (
-                      <p className="text-xs text-red-600 mb-2">{apiKeyError}</p>
+                      <p className="text-xs text-red-500 mb-2">{apiKeyError}</p>
                     )}
                     
                     {hasUserApiKey() && (
                       <button
                         onClick={handleClearApiKey}
-                        className="text-xs text-red-600 hover:text-red-700 underline"
+                        className="text-xs text-red-500 hover:text-red-400 underline"
                       >
                         Clear existing key
                       </button>
@@ -434,11 +460,16 @@ export function ChatPanel({
                   }`}
                 >
                   <div
-                    className={`rounded-lg px-3 py-2 text-xs max-w-[80%] ${
+                    className={cn(
+                      "rounded-lg px-3 py-2 text-xs max-w-[80%]",
                       msg.sender === "user"
-                        ? "bg-blue-100 text-blue-900"
-                        : "bg-gray-100 text-gray-900"
-                    }`}
+                        ? isDark
+                          ? "bg-blue-900/60 text-blue-50"
+                          : "bg-blue-100 text-blue-900"
+                        : isDark
+                          ? "bg-zinc-800 text-zinc-100"
+                          : "bg-gray-100 text-gray-900",
+                    )}
                     style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
                   >
                     {msg.message}
@@ -449,11 +480,34 @@ export function ChatPanel({
               {/* Loading bubble */}
               {loading && (
                 <div className="flex justify-start">
-                  <div className="rounded-lg px-3 py-2 text-xs bg-gray-100 text-gray-900">
+                  <div
+                    className={cn(
+                      "rounded-lg px-3 py-2 text-xs",
+                      isDark ? "bg-zinc-800 text-zinc-100" : "bg-gray-100 text-gray-900",
+                    )}
+                  >
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div
+                        className={cn(
+                          "w-2 h-2 rounded-full animate-bounce",
+                          isDark ? "bg-zinc-400" : "bg-gray-400",
+                        )}
+                        style={{ animationDelay: '0ms' }}
+                      ></div>
+                      <div
+                        className={cn(
+                          "w-2 h-2 rounded-full animate-bounce",
+                          isDark ? "bg-zinc-400" : "bg-gray-400",
+                        )}
+                        style={{ animationDelay: '150ms' }}
+                      ></div>
+                      <div
+                        className={cn(
+                          "w-2 h-2 rounded-full animate-bounce",
+                          isDark ? "bg-zinc-400" : "bg-gray-400",
+                        )}
+                        style={{ animationDelay: '300ms' }}
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -462,7 +516,12 @@ export function ChatPanel({
           </div>
 
           {/* Input Area */}
-          <div className="p-3 border-t border-gray-200">
+          <div
+            className={cn(
+              "p-3 border-t",
+              isDark ? "border-zinc-800" : "border-gray-200",
+            )}
+          >
             <div className="flex gap-2 items-end">
               <Input
                 value={inputValue}
@@ -474,7 +533,10 @@ export function ChatPanel({
                   }
                 }}
                 placeholder="Type your message..."
-                className="flex-1 text-xs"
+                className={cn(
+                  "flex-1 text-xs",
+                  isDark && "bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500",
+                )}
                 disabled={loading}
               />
               <Button

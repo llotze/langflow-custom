@@ -1,4 +1,4 @@
-import { FaDiscord, FaGithub } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
 import { ForwardedIconComponent } from "@/components/common/genericIconComponent";
 import {
   DATASTAX_DOCS_URL,
@@ -132,16 +132,6 @@ export const AccountMenu = () => {
               >
                 <FaGithub className="h-4 w-4" />
                 GitHub
-              </span>
-            </HeaderMenuItemLink>
-            <HeaderMenuItemLink newPage href={DISCORD_URL}>
-              <span
-                data-testid="menu_discord_button"
-                id="menu_discord_button"
-                className="flex items-center gap-2"
-              >
-                <FaDiscord className="h-4 w-4 text-[#5865F2]" />
-                Discord
               </span>
             </HeaderMenuItemLink>
             <HeaderMenuItemLink newPage href={TWITTER_URL}>
