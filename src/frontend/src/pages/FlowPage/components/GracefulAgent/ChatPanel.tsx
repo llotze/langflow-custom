@@ -89,7 +89,7 @@ export function ChatPanel({
     }
 
     // Create new SSE connection
-    const mcpServerUrl = process.env.VITE_MCP_SERVER_URL || 'http://localhost:3001';
+    const mcpServerUrl = process.env.VITE_MCP_SERVER_URL;
     const sseUrl = `${mcpServerUrl}/mcp/api/flow-updates/${flowId}`;
     
     console.log(`🔌 Connecting to SSE for flow ${flowId}...`);
