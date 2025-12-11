@@ -1,10 +1,10 @@
-import { X, Send } from "lucide-react";
+import { X, Send, Settings } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { mcpApiHelpers } from "@/controllers/API/mcp-api";
+import { mcpApiHelpers, hasUserApiKey, setUserApiKey, clearUserApiKey } from "@/controllers/API/mcp-api";
 import gracefulRobotHead from "@/assets/graceful/graceful-robot-head.png";
 
 interface ChatMessage {
@@ -51,6 +51,9 @@ export function ChatPanel({
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const [isResizingLocal, setIsResizingLocal] = useState(false);
+  const [showApiKeyInput, setShowApiKeyInput] = useState(!hasUserApiKey());
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiKeyError, setApiKeyError] = useState("");
 
   // ---- Fetch chat history on open/flow/session change ----
   useEffect(() => {
@@ -67,6 +70,20 @@ export function ChatPanel({
 
   // ---- Send message and get response ----
   const handleSendMessage = async () => {
+    // Check if API key is set
+    if (!hasUserApiKey()) {
+      setShowApiKeyInput(true);
+      setMessages(prev => [...prev, {
+        id: Math.random().toString(),
+        flow_id: flowId,
+        session_id: sessionId,
+        sender: "assistant",
+        message: "🔑 Please set your Langflow API key first to use Hopper.",
+        timestamp: new Date().toISOString()
+      }]);
+      return;
+    }
+
     if (!inputValue.trim() || loading) return;
     
     // Validate flowId before sending
@@ -160,6 +177,41 @@ export function ChatPanel({
   const closedTop = headerOffset + 16;
   const dragState = useRef<{ startX: number; startWidth: number } | null>(null);
 
+  const handleSaveApiKey = () => {
+    if (!apiKeyInput || apiKeyInput.trim().length === 0) {
+      setApiKeyError("Please enter a valid API key");
+      return;
+    }
+    
+    setUserApiKey(apiKeyInput.trim());
+    setShowApiKeyInput(false);
+    setApiKeyError("");
+    
+    setMessages(prev => [...prev, {
+      id: Math.random().toString(),
+      flow_id: flowId,
+      session_id: sessionId,
+      sender: "assistant",
+      message: "✅ API key saved! You can now use Hopper to build and modify flows.",
+      timestamp: new Date().toISOString()
+    }]);
+  };
+
+  const handleClearApiKey = () => {
+    clearUserApiKey();
+    setShowApiKeyInput(true);
+    setApiKeyInput("");
+    
+    setMessages(prev => [...prev, {
+      id: Math.random().toString(),
+      flow_id: flowId,
+      session_id: sessionId,
+      sender: "assistant",
+      message: "🔑 API key cleared. Please enter a new one to continue using Hopper.",
+      timestamp: new Date().toISOString()
+    }]);
+  };
+
   return (
     <motion.div
       initial={false}
@@ -248,14 +300,31 @@ export function ChatPanel({
                   <h3 className="text-sm font-medium">Hopper</h3>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="hover:bg-gray-100 h-7 w-7 p-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              
+              <div className="flex items-center gap-1">
+                {/* Settings Button */}
+                {!showApiKeyInput && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowApiKeyInput(true)}
+                    className="hover:bg-gray-100 h-7 w-7 p-0"
+                    title="API Key Settings"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                )}
+                
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="hover:bg-gray-100 h-7 w-7 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Mode Toggle */}
@@ -277,6 +346,74 @@ export function ChatPanel({
                 Edit
               </Button>
             </div>
+
+            {/* API Key Setup UI */}
+            {showApiKeyInput && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <div className="flex-shrink-0 text-xl">🔑</div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-1">
+                      <h4 className="text-xs font-semibold text-gray-900">
+                        Langflow API Key {hasUserApiKey() ? "(Optional)" : "Required"}
+                      </h4>
+                      {/* Close Settings Button */}
+                      <button
+                        onClick={() => setShowApiKeyInput(false)}
+                        className="text-gray-400 hover:text-gray-600 -mt-1 -mr-1"
+                        title="Close settings"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <p className="text-xs text-gray-600 mb-2">
+                      {hasUserApiKey() 
+                        ? "Update your API key or clear it below"
+                        : "Create an API key in Settings → API Keys"
+                      }
+                    </p>
+                    
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="password"
+                        value={apiKeyInput}
+                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveApiKey();
+                          }
+                          if (e.key === 'Escape') {
+                            setShowApiKeyInput(false);
+                          }
+                        }}
+                        placeholder={hasUserApiKey() ? "Enter new API key..." : "sk-lf-..."}
+                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={handleSaveApiKey}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    
+                    {apiKeyError && (
+                      <p className="text-xs text-red-600 mb-2">{apiKeyError}</p>
+                    )}
+                    
+                    {hasUserApiKey() && (
+                      <button
+                        onClick={handleClearApiKey}
+                        className="text-xs text-red-600 hover:text-red-700 underline"
+                      >
+                        Clear existing key
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Content Area */}
@@ -285,14 +422,14 @@ export function ChatPanel({
             ref={scrollContainerRef}
           >
             {/* Chat history */}
-            <div className="mb-4">
+            <div className="space-y-2">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
                   ref={(el) => {
                     messageRefs.current[msg.id] = el;
                   }}
-                  className={`mb-2 flex ${
+                  className={`flex ${
                     msg.sender === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
@@ -311,7 +448,7 @@ export function ChatPanel({
               
               {/* Loading bubble */}
               {loading && (
-                <div className="mb-2 flex justify-start">
+                <div className="flex justify-start">
                   <div className="rounded-lg px-3 py-2 text-xs bg-gray-100 text-gray-900">
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>

@@ -1,22 +1,82 @@
 import axios from "axios";
 
-// Use Vite env variable (must be prefixed with VITE_)
 const MCP_SERVER_URL = import.meta.env.VITE_MCP_SERVER_URL || "http://localhost:3001";
 
-// Create a separate axios instance for MCP server (no auth needed)
+/**
+ * Retrieves user's API key from localStorage.
+ */
+function getUserApiKey(): string | null {
+  return localStorage.getItem('langflow_mcp_api_key');
+}
+
+/**
+ * Stores user's API key in localStorage.
+ */
+export function setUserApiKey(apiKey: string): void {
+  localStorage.setItem('langflow_mcp_api_key', apiKey);
+}
+
+/**
+ * Removes user's API key from localStorage.
+ */
+export function clearUserApiKey(): void {
+  localStorage.removeItem('langflow_mcp_api_key');
+}
+
+/**
+ * Checks if user has a valid API key stored.
+ */
+export function hasUserApiKey(): boolean {
+  const key = getUserApiKey();
+  return !!key && key.trim().length > 0;
+}
+
+/**
+ * Axios instance for MCP server communication.
+ */
 export const mcpApi = axios.create({
   baseURL: MCP_SERVER_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
-// MCP API helper functions
+/**
+ * Adds user's API key to all outgoing requests.
+ */
+mcpApi.interceptors.request.use(
+  (config) => {
+    const apiKey = getUserApiKey();
+    
+    if (apiKey) {
+      config.headers['x-api-key'] = apiKey;
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Handles authentication errors from the server.
+ */
+mcpApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.error('MCP authentication failed - invalid or missing API key');
+    }
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Helper functions for MCP API operations.
+ */
 export const mcpApiHelpers = {
-  // Health check
   healthCheck: () => mcpApi.get("/health"),
 
-  // Template operations
   searchTemplates: (keyword?: string, tags?: string, page?: number, pageSize?: number) =>
     mcpApi.get("/mcp/api/search-templates", { 
       params: { keyword, tags, page, pageSize } 
@@ -28,7 +88,6 @@ export const mcpApiHelpers = {
   createFlowFromTemplate: (templateId: string, name?: string, description?: string) =>
     mcpApi.post(`/mcp/api/create-flow-from-template/${templateId}`, { name, description }),
 
-  // Flow operations
   tweakFlow: (flowId: string, operations: any[], validateAfter?: boolean, continueOnError?: boolean) =>
     mcpApi.post(`/mcp/api/tweak-flow/${flowId}`, { 
       operations, 
@@ -53,7 +112,6 @@ export const mcpApiHelpers = {
   getFlowDetails: (flowId: string) =>
     mcpApi.get(`/mcp/api/flow-details/${flowId}`),
 
-  // Component discovery
   searchComponents: (keyword: string) =>
     mcpApi.get("/mcp/api/search", { params: { keyword } }),
 
@@ -68,7 +126,6 @@ export const mcpApiHelpers = {
       params: { query } 
     }),
 
-  // Flow building
   buildFlow: (name: string, description: string, nodes: any[], connections: any[]) =>
     mcpApi.post("/mcp/api/build-flow", { name, description, nodes, connections }),
 
