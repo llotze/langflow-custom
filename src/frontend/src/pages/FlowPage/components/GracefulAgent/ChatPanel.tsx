@@ -372,7 +372,7 @@ export function ChatPanel({
                 <div className="flex items-start gap-2">
                   <div className="flex-shrink-0 text-xl">🔑</div>
                   <div className="flex-1">
-                    <div className="flex items-start mb-1">
+                    <div className="flex items-start justify-between mb-1">
                       <h4
                         className={cn(
                           "text-xs font-semibold",
@@ -381,6 +381,18 @@ export function ChatPanel({
                       >
                         Langflow API Key {hasUserApiKey() ? "(Optional)" : "Required"}
                       </h4>
+                  <button
+                    onClick={() => setShowApiKeyInput(false)}
+                    className={cn(
+                      "-mt-1 -mr-1",
+                      isDark
+                        ? "text-zinc-400 hover:text-zinc-200"
+                        : "text-gray-400 hover:text-gray-600",
+                    )}
+                    title="Close settings"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                     </div>
                     
                     <p
